@@ -1,0 +1,19 @@
+name: miforge-stack
+
+services:
+  miforge_database:
+    image: mariadb
+    container_name: miforge_database
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: miforge
+      MARIADB_USER: aac
+      MARIADB_PASSWORD: aac
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
