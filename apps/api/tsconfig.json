@@ -8,7 +8,6 @@
 		"verbatimModuleSyntax": true,
 		"strict": true,
 		"skipLibCheck": true,
-		"baseUrl": ".",
 		"paths": {
 			"@/*": ["./src/*"],
 		},
