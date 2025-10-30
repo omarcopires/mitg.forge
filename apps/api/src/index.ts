@@ -1,15 +1,18 @@
 import "reflect-metadata";
 import { config as dotenv } from "dotenv-flow";
 import { container } from "tsyringe";
+import { bootstrapContainer } from "@/di/container";
+import { TOKENS } from "@/di/tokens";
 import { env } from "@/env";
+import type { Logger } from "@/infra/logging/logger";
 import { app } from "@/main/config/app";
-import { TOKENS } from "./di/tokens";
-import type { Logger } from "./infra/logging/logger";
 
 dotenv({
 	node_env: process.env.NODE_ENV || "development",
 	debug: true,
 });
+
+bootstrapContainer();
 
 const logger = container.resolve<Logger>(TOKENS.RootLogger);
 
@@ -30,4 +33,16 @@ if (import.meta.main) {
 
 	process.on("SIGINT", () => shutdown("SIGINT"));
 	process.on("SIGTERM", () => shutdown("SIGTERM"));
+
+	if (env.isDev && import.meta.hot) {
+		import.meta.hot.accept();
+		import.meta.hot.dispose(() => {
+			try {
+				server.stop(true);
+				logger.info("HMR: Server stopped");
+			} catch (error) {
+				logger.error("HMR: Error stopping server", { error });
+			}
+		});
+	}
 }
