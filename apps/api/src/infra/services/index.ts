@@ -1,6 +1,6 @@
 import type { DependencyContainer } from "tsyringe";
 import { TOKENS } from "@/di/tokens";
-import type { TibiaClientService } from "@/domain";
+import type { AccountsService, TibiaClientService } from "@/domain";
 import type { Logger } from "@/infra/logging/logger";
 
 export class Services {
@@ -8,6 +8,10 @@ export class Services {
 
 	get tibiaClient() {
 		return this.di.resolve<TibiaClientService>(TOKENS.TibiaClientService);
+	}
+
+	get accounts() {
+		return this.di.resolve<AccountsService>(TOKENS.AccountsService);
 	}
 
 	get logger() {

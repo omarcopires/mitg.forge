@@ -18,6 +18,9 @@ export const env = cleanEnv(process.env, {
 		default: "4000",
 		desc: "The port the server will listen on",
 	}),
+	JWT_SECRET: str({
+		desc: "The secret key used to sign JWT tokens",
+	}),
 	ALLOWED_ORIGINS: arrayFromString({
 		desc: "A comma-separated list of allowed origins for CORS",
 	}),

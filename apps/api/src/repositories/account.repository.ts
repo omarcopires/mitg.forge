@@ -24,4 +24,15 @@ export class AccountRepository {
 			},
 		});
 	}
+
+	async bans(accountId: number) {
+		return this.prisma.account_bans.findMany({
+			where: {
+				account_id: accountId,
+			},
+			orderBy: {
+				expires_at: "desc",
+			},
+		});
+	}
 }

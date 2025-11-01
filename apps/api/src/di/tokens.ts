@@ -1,15 +1,22 @@
 import type { InjectionToken } from "tsyringe";
-import type { TibiaClientService } from "@/domain";
+import type { AccountsService, TibiaClientService } from "@/domain";
 import type { Prisma } from "@/infra/clients";
+import type { Cookies } from "@/infra/cookies";
 import type { HasherCrypto } from "@/infra/crypto/hasher";
+import type { JwtCrypto } from "@/infra/crypto/jwt";
 import type { Logger, RootLogger } from "@/infra/logging/logger";
-import type { AccountRepository, PlayersRepository } from "@/repositories";
+import type { Metadata } from "@/infra/metadata";
+import type {
+	AccountRepository,
+	PlayersRepository,
+	SessionRepository,
+} from "@/repositories";
 
 export const token = <T>(desc: string) => Symbol(desc) as InjectionToken<T>;
 
 export const TOKENS = {
 	// context
-	ReqContext: token<ReqContext>("ReqContext"),
+	Context: token<ReqContext>("Context"),
 
 	// Logger
 	Logger: token<Logger>("Logger"),
@@ -18,13 +25,20 @@ export const TOKENS = {
 	// Clients
 	Prisma: token<Prisma>("Prisma"),
 
+	// Utils
+	Metadata: token<Metadata>("Metadata"),
+	Cookies: token<Cookies>("Cookies"),
+
 	// Crypto
 	HasherCrypto: token<HasherCrypto>("HasherCrypto"),
+	JwtCrypto: token<JwtCrypto>("JwtCrypto"),
 
 	// Repositories
 	AccountRepository: token<AccountRepository>("AccountRepository"),
 	PlayersRepository: token<PlayersRepository>("PlayersRepository"),
+	SessionRepository: token<SessionRepository>("SessionRepository"),
 
 	// Services
 	TibiaClientService: token<TibiaClientService>("TibiaClientService"),
+	AccountsService: token<AccountsService>("AccountsService"),
 } as const;

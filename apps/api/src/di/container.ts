@@ -1,12 +1,19 @@
 import { container, type DependencyContainer, Lifecycle } from "tsyringe";
 import { TOKENS } from "@/di/tokens";
-import { TibiaClientService } from "@/domain";
+import { AccountsService, TibiaClientService } from "@/domain";
 import { env } from "@/env";
 import { makePrisma, type Prisma } from "@/infra/clients";
+import { Cookies } from "@/infra/cookies";
 import { HasherCrypto } from "@/infra/crypto/hasher";
+import { JwtCrypto } from "@/infra/crypto/jwt";
 import { RootLogger } from "@/infra/logging/logger";
 import { makeRequestLogger } from "@/infra/logging/request-logger";
-import { AccountRepository, PlayersRepository } from "@/repositories";
+import { Metadata } from "@/infra/metadata";
+import {
+	AccountRepository,
+	PlayersRepository,
+	SessionRepository,
+} from "@/repositories";
 
 declare global {
 	var __PRISMA__: Prisma | undefined;
@@ -37,6 +44,11 @@ export function bootstrapContainer() {
 		{ useClass: HasherCrypto },
 		{ lifecycle: Lifecycle.Singleton },
 	);
+	container.register(
+		TOKENS.JwtCrypto,
+		{ useClass: JwtCrypto },
+		{ lifecycle: Lifecycle.Singleton },
+	);
 
 	global.__BOOTSTRAPPED__ = true;
 	return container;
@@ -47,13 +59,25 @@ export function createRequestContainer(
 ): DependencyContainer {
 	const childContainer = container.createChildContainer();
 
-	childContainer.register<ReqContext>(TOKENS.ReqContext, { useValue: context });
+	childContainer.register<ReqContext>(TOKENS.Context, { useValue: context });
 
 	// Logger (scoped per request)
 	const rootLogger = childContainer.resolve<RootLogger>(TOKENS.RootLogger);
 	childContainer.registerInstance(
 		TOKENS.Logger,
 		makeRequestLogger(rootLogger, context),
+	);
+
+	// Additional Infra (scoped per request)
+	childContainer.register(
+		TOKENS.Metadata,
+		{ useClass: Metadata },
+		{ lifecycle: Lifecycle.ResolutionScoped },
+	);
+	childContainer.register(
+		TOKENS.Cookies,
+		{ useClass: Cookies },
+		{ lifecycle: Lifecycle.ResolutionScoped },
 	);
 
 	// Repositórios (scoped per request)
@@ -67,11 +91,21 @@ export function createRequestContainer(
 		{ useClass: PlayersRepository },
 		{ lifecycle: Lifecycle.ResolutionScoped },
 	);
+	childContainer.register(
+		TOKENS.SessionRepository,
+		{ useClass: SessionRepository },
+		{ lifecycle: Lifecycle.ResolutionScoped },
+	);
 
 	// Serviços de domínio (scoped per request)
 	childContainer.register(
 		TOKENS.TibiaClientService,
 		{ useClass: TibiaClientService },
+		{ lifecycle: Lifecycle.ResolutionScoped },
+	);
+	childContainer.register(
+		TOKENS.AccountsService,
+		{ useClass: AccountsService },
 		{ lifecycle: Lifecycle.ResolutionScoped },
 	);
 
