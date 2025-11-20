@@ -1,5 +1,7 @@
 import { container, Lifecycle } from "tsyringe";
 import {
+	Cache,
+	CacheKeys,
 	Cookies,
 	DetectionChanges,
 	HasherCrypto,
@@ -52,5 +54,15 @@ export function registerModules() {
 		TOKENS.Pagination,
 		{ useClass: Pagination },
 		{ lifecycle: Lifecycle.ResolutionScoped },
+	);
+	container.register(
+		TOKENS.Cache,
+		{ useClass: Cache },
+		{ lifecycle: Lifecycle.Singleton },
+	);
+	container.register(
+		TOKENS.CacheKeys,
+		{ useClass: CacheKeys },
+		{ lifecycle: Lifecycle.Singleton },
 	);
 }

@@ -1,3 +1,5 @@
+export * from "./cache";
+export * from "./cache/keys";
 export * from "./cookies";
 export * from "./crypto";
 export * from "./detection";

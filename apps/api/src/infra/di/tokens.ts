@@ -25,6 +25,8 @@ import type {
 } from "@/application/usecases";
 import type { Mailer, Prisma, Redis } from "@/domain/clients";
 import type {
+	Cache,
+	CacheKeys,
 	Cookies,
 	DetectionChanges,
 	HasherCrypto,
@@ -74,6 +76,8 @@ export const TOKENS = {
 	Pagination: token<Pagination>("Pagination"),
 	DetectionChanges: token<DetectionChanges>("DetectionChanges"),
 	PlayerNameDetection: token<PlayerNameDetection>("PlayerNameDetection"),
+	Cache: token<Cache>("Cache"),
+	CacheKeys: token<CacheKeys>("CacheKeys"),
 
 	// Crypto
 	HasherCrypto: token<HasherCrypto>("HasherCrypto"),

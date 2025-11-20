@@ -128,7 +128,6 @@ export const env = cleanEnv(process.env, {
 		default: "4000",
 		desc: "The port the server will listen on",
 	}),
-
 	REDIS_URL: str({
 		desc: "The Redis connection URL",
 	}),
