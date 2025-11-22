@@ -97,6 +97,7 @@ model accounts {
    */
   sessions      miforge_account_sessions[]
   registrations miforge_account_registration?
+  audits        miforge_account_audit[]
 }
 
 model boosted_boss {

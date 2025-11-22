@@ -12,6 +12,7 @@ import {
 	AccountPermissionedUseCase,
 	AccountRegistrationUseCase,
 	AccountStoreHistoryUseCase,
+	AuditAccountUseCase,
 	SessionAuthenticatedUseCase,
 	SessionInfoUseCase,
 	SessionNotAuthenticatedUseCase,
@@ -74,6 +75,11 @@ export function registerUseCases() {
 	container.register(
 		TOKENS.AccountCancelDeleteCharacterUseCase,
 		{ useClass: AccountCancelDeleteCharacterUseCase },
+		{ lifecycle: Lifecycle.ResolutionScoped },
+	);
+	container.register(
+		TOKENS.AccountAuditUseCase,
+		{ useClass: AuditAccountUseCase },
 		{ lifecycle: Lifecycle.ResolutionScoped },
 	);
 

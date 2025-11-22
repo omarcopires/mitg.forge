@@ -1,6 +1,7 @@
 import type { InjectionToken } from "tsyringe";
 import type {
 	AccountsService,
+	AuditService,
 	PlayersService,
 	SessionService,
 	TibiaClientService,
@@ -19,6 +20,7 @@ import type {
 	AccountPermissionedUseCase,
 	AccountRegistrationUseCase,
 	AccountStoreHistoryUseCase,
+	AuditAccountUseCase,
 	SessionAuthenticatedUseCase,
 	SessionInfoUseCase,
 	SessionNotAuthenticatedUseCase,
@@ -42,6 +44,7 @@ import type {
 } from "@/domain/modules";
 import type {
 	AccountRepository,
+	AuditRepository,
 	PlayersRepository,
 	SessionRepository,
 } from "@/domain/repositories";
@@ -94,6 +97,7 @@ export const TOKENS = {
 	PlayersRepository: token<PlayersRepository>("PlayersRepository"),
 	SessionRepository: token<SessionRepository>("SessionRepository"),
 	WorldsRepository: token<WorldsRepository>("WorldsRepository"),
+	AuditRepository: token<AuditRepository>("AuditRepository"),
 
 	// Services
 	TibiaClientService: token<TibiaClientService>("TibiaClientService"),
@@ -101,6 +105,7 @@ export const TOKENS = {
 	SessionService: token<SessionService>("SessionService"),
 	WorldsService: token<WorldsService>("WorldsService"),
 	PlayersService: token<PlayersService>("PlayersService"),
+	AuditService: token<AuditService>("AuditService"),
 
 	// UseCases
 	AccountLoginUseCase: token<AccountLoginUseCase>("LoginUseCase"),
@@ -136,6 +141,7 @@ export const TOKENS = {
 		token<AccountCancelDeleteCharacterUseCase>(
 			"AccountCancelDeleteCharacterUseCase",
 		),
+	AccountAuditUseCase: token<AuditAccountUseCase>("AuditAccountUseCase"),
 
 	WorldsListUseCase: token<WorldsListUseCase>("WorldsListUseCase"),
 

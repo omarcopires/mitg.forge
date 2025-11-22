@@ -1,5 +1,4 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { TibiaCoins } from "@/components/Coins";
 import { PaginationControls } from "@/components/Pagination";
 import {
 	usePagination,
@@ -12,14 +11,15 @@ import { Container } from "@/ui/Container";
 import { InnerContainer } from "@/ui/Container/Inner";
 import { Tooltip } from "@/ui/Tooltip";
 
-export const AccountCoinsHistory = () => {
+export const AccountAuditHistory = () => {
+	const { formatDate } = useTimezone();
 	const { pagination, setPagination } = usePagination({
 		initialPage: 1,
-		initialSize: 10,
+		initialSize: 20,
 	});
-	const { formatDate } = useTimezone();
+
 	const { data, refetch, isFetching } = useQuery(
-		api.query.miforge.accounts.store.history.queryOptions({
+		api.query.miforge.accounts.audit.queryOptions({
 			placeholderData: keepPreviousData,
 			input: {
 				page: pagination?.page,
@@ -40,11 +40,11 @@ export const AccountCoinsHistory = () => {
 		totalPages: data?.meta?.totalPages,
 	});
 
-	const storeHistory = data?.results ?? [];
+	const auditHistory = data?.results ?? [];
 
 	return (
 		<Container
-			title="Coins History"
+			title="Audit History"
 			actions={
 				<Tooltip content="Refresh History">
 					<button
@@ -73,21 +73,24 @@ export const AccountCoinsHistory = () => {
 						<th className="w-[2%] border border-septenary p-1 text-start font-bold text-secondary">
 							#
 						</th>
+						<th className="hidden border border-septenary p-1 text-start font-bold text-secondary sm:table-cell">
+							Action
+						</th>
+						<th className="border border-septenary p-1 text-start font-bold text-secondary">
+							Details
+						</th>
+						<th className="border border-septenary p-1 text-start font-bold text-secondary">
+							IP
+						</th>
 						<th className="border border-septenary p-1 text-start font-bold text-secondary">
 							Date
 						</th>
-						<th className="border border-septenary p-1 text-start font-bold text-secondary">
-							Description
-						</th>
-						<th className="w-[10%] border border-septenary p-1 text-start font-bold text-secondary">
-							Balance
-						</th>
 					</thead>
 					<tbody>
-						{storeHistory.map((history, index) => {
+						{auditHistory.map((entry, index) => {
 							return (
 								<tr
-									key={`${history.id}-${history.account_id}-${index}`}
+									key={`${entry.id}-${entry.requestId}-${index}`}
 									className="bg-tibia-900 even:bg-tibia-600"
 								>
 									<td className="border border-septenary p-1 text-center">
@@ -95,24 +98,24 @@ export const AccountCoinsHistory = () => {
 											{index + 1}.
 										</span>
 									</td>
+									<td className="hidden border border-septenary p-1 text-secondary text-sm sm:table-cell">
+										{entry.action}
+									</td>
 									<td className="border border-septenary p-1 text-secondary text-sm">
-										{formatDate(history?.time ?? new Date(), {
-											year: "2-digit",
+										{entry.details}
+									</td>
+									<td className="border border-septenary p-1 text-secondary text-sm">
+										{entry.ip}
+									</td>
+									<td className="border border-septenary p-1 text-secondary text-sm">
+										{formatDate(entry.createdAt, {
+											year: "numeric",
 											month: "2-digit",
 											day: "2-digit",
 											hour: "2-digit",
 											minute: "2-digit",
 											second: "2-digit",
 										})}
-									</td>
-									<td className="border border-septenary p-1 text-secondary text-sm">
-										{history.description}
-									</td>
-									<td className="border border-septenary p-1 text-secondary text-sm">
-										<TibiaCoins
-											amount={history.coin_amount}
-											type={history.coin_type}
-										/>
 									</td>
 								</tr>
 							);

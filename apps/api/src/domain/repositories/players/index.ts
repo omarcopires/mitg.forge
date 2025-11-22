@@ -3,12 +3,21 @@ import { inject, injectable } from "tsyringe";
 import type { Prisma } from "@/domain/clients";
 import { TOKENS } from "@/infra/di/tokens";
 import { dateToUnixTimestamp } from "@/shared/utils/date";
+import type { AuditRepository } from "../audit";
 
 @injectable()
 export class PlayersRepository {
-	constructor(@inject(TOKENS.Prisma) private readonly prisma: Prisma) {}
+	constructor(
+		@inject(TOKENS.Prisma) private readonly prisma: Prisma,
+		@inject(TOKENS.AuditRepository)
+		private readonly auditRepository: AuditRepository,
+	) {}
 
 	async editByName(name: string, data: Partial<players>) {
+		this.auditRepository.createAudit("UPDATED_CHARACTER", {
+			metadata: { name, data },
+			details: `Character ${name} updated`,
+		});
 		return this.prisma.players.update({
 			where: {
 				name,
@@ -18,6 +27,16 @@ export class PlayersRepository {
 	}
 
 	async scheduleToDeleteByName(name: string, deleteAt?: Date) {
+		this.auditRepository.createAudit(
+			deleteAt ? "DELETED_CHARACTER" : "UNDELETE_CHARACTER",
+			{
+				metadata: { name, deleteAt: deleteAt?.toISOString() || null },
+				details: `Character ${name} scheduled for deletion at ${
+					deleteAt ? deleteAt.toISOString() : "null"
+				}`,
+			},
+		);
+
 		return this.prisma.players.update({
 			where: {
 				name,
@@ -50,6 +69,9 @@ export class PlayersRepository {
 		data: Omit<players, "id" | "account_id">,
 		initialItems: player_items[] = [],
 	) {
+		this.auditRepository.createAudit("CREATED_CHARACTER", {
+			details: `Character ${data.name} created for account`,
+		});
 		return this.prisma.players.create({
 			data: {
 				account_id: accountId,

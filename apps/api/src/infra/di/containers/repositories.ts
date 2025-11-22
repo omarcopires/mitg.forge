@@ -1,6 +1,7 @@
 import { container, Lifecycle } from "tsyringe";
 import {
 	AccountRepository,
+	AuditRepository,
 	PlayersRepository,
 	SessionRepository,
 } from "@/domain/repositories";
@@ -32,6 +33,11 @@ export function registerRepositories() {
 	container.register(
 		TOKENS.WorldsRepository,
 		{ useClass: WorldsRepository },
+		{ lifecycle: Lifecycle.ResolutionScoped },
+	);
+	container.register(
+		TOKENS.AuditRepository,
+		{ useClass: AuditRepository },
 		{ lifecycle: Lifecycle.ResolutionScoped },
 	);
 }
