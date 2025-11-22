@@ -70,7 +70,7 @@ export class PlayersRepository {
 		initialItems: player_items[] = [],
 	) {
 		this.auditRepository.createAudit("CREATED_CHARACTER", {
-			details: `Character ${data.name} created for account ${accountId}`,
+			details: `Character ${data.name} created for account`,
 		});
 		return this.prisma.players.create({
 			data: {
