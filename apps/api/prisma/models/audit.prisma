@@ -1,0 +1,24 @@
+model miforge_account_audit {
+  id Int @id @default(autoincrement())
+
+  action    String  @db.VarChar(255) // Description of the action performed
+  details   String? @db.Text // Additional details about the action
+  ip        String? // IP address from which the action was performed
+  userAgent String? @db.VarChar(512) // User agent string of the client
+
+  success   Boolean @default(true) // Whether the action was successful
+  errorCode String? @db.VarChar(100) // Error code if the action failed
+
+  requestId String? @db.VarChar(255) // ID of the request associated with the action
+  metadata  Json? // Additional metadata related to the action
+
+  accountId Int      @map("account_id") @db.UnsignedInt
+  account   accounts @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([requestId], name: "idx_miforge_account_audit_request_id")
+  @@index([action], name: "idx_miforge_account_audit_action")
+  @@map("miforge_account_audit")
+}
