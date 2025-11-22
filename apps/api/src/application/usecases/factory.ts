@@ -52,6 +52,7 @@ export class UseCasesFactory {
 		const cancelDeleteCharacter = this.di.resolve(
 			TOKENS.AccountCancelDeleteCharacterUseCase,
 		);
+		const auditHistory = this.di.resolve(TOKENS.AccountAuditUseCase);
 
 		return {
 			login,
@@ -66,6 +67,7 @@ export class UseCasesFactory {
 			editCharacter,
 			deleteCharacter,
 			cancelDeleteCharacter,
+			auditHistory,
 		} as const;
 	}
 

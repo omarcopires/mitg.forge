@@ -3,6 +3,7 @@ import type { Prisma } from "@/domain/clients";
 import type { Logger, Metadata } from "@/domain/modules";
 import { TOKENS } from "@/infra/di/tokens";
 import { safeStringify } from "@/shared/utils/json";
+import type { PaginationInput } from "@/shared/utils/paginate";
 
 @injectable()
 export class AuditRepository {
@@ -12,10 +13,7 @@ export class AuditRepository {
 		@inject(TOKENS.Metadata) private readonly metadata: Metadata,
 	) {}
 
-	async findAuditsByAccountId(
-		accountId: number,
-		opts?: { page?: number; size?: number },
-	) {
+	async findAuditsByAccountId(accountId: number, opts?: PaginationInput) {
 		const page = opts?.page ?? 1;
 		const size = opts?.size ?? 20;
 

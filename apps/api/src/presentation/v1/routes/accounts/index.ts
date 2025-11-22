@@ -1,4 +1,5 @@
 import { base } from "@/infra/rpc/base";
+import { auditHistoryRoute } from "./audit";
 import { accountCharactersRoutes } from "./characters";
 import { detailsRoute } from "./details";
 import { loginRoute } from "./login";
@@ -13,4 +14,5 @@ export const accountsRouter = base.prefix("/accounts").tag("Accounts").router({
 	characters: accountCharactersRoutes,
 	store: accountsStoreRoutes,
 	registrationKey: accountRegistrationKey,
+	audit: auditHistoryRoute,
 });
