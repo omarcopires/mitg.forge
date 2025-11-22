@@ -40,6 +40,23 @@ export const AccountDetailsHistory = () => {
 					</div>
 				</div>
 			</InnerContainer>
+			<InnerContainer>
+				<div className="flex flex-col items-end justify-between gap-1 md:flex-row md:items-start md:gap-0">
+					<div className="flex flex-col">
+						<span className="font-bold font-verdana text-secondary text-sm leading-tight">
+							Audit History
+						</span>
+						<span className="font-verdana text-secondary text-sm leading-tight">
+							Contains all historical data about your account security changes.
+						</span>
+					</div>
+					<div>
+						<ButtonImageLink variant="info" to="/account/audit_history">
+							View History
+						</ButtonImageLink>
+					</div>
+				</div>
+			</InnerContainer>
 		</Container>
 	);
 };
