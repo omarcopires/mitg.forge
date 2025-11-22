@@ -42,6 +42,7 @@ import type {
 } from "@/domain/modules";
 import type {
 	AccountRepository,
+	AuditRepository,
 	PlayersRepository,
 	SessionRepository,
 } from "@/domain/repositories";
@@ -94,6 +95,7 @@ export const TOKENS = {
 	PlayersRepository: token<PlayersRepository>("PlayersRepository"),
 	SessionRepository: token<SessionRepository>("SessionRepository"),
 	WorldsRepository: token<WorldsRepository>("WorldsRepository"),
+	AuditRepository: token<AuditRepository>("AuditRepository"),
 
 	// Services
 	TibiaClientService: token<TibiaClientService>("TibiaClientService"),
