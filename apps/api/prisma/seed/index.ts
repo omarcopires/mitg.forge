@@ -34,7 +34,8 @@ const miforgeConfig = MiforgeConfigSchema.decode({
     message: "We'll be back soon."
   },
   account: {
-    emailConfirmationRequired: Boolean(env.MAILER_PROVIDER)
+    emailConfirmationRequired: Boolean(env.MAILER_PROVIDER),
+    passwordResetConfirmationRequired: Boolean(env.MAILER_PROVIDER)
   }
 })
 
@@ -99,48 +100,34 @@ async function main() {
     })
     console.log("[seed] Created default boosted_creature")
   }
-  
-
-  let godAccount = await prisma.accounts.findFirst({
-    where: {
-      email: "@god"
-    }
-  })
 
   const defaultPassword = crypto.hash("sha1", "god")
 
-  if (!godAccount) {
-    await prisma.accounts.create({
-      data: {
-        email: "god@god.com",
+  console.log("[seed] ensuring god account exists")
+  const account = await prisma.accounts.upsert({
+    where: {
+      email: "god@god.com"
+    },
+    create: {
+      email: "god@god.com",
         password: defaultPassword, // "god",
         name:"god",
         type: 5,
         email_confirmed: true
-      }
-    })
-    console.log("[seed] Created god account")
+    },
+    update: {}
+  });
 
-    godAccount = await prisma.accounts.findFirst({
-      where: {
-        email: "god@god.com"
-      }
-    })
-  }
-
-  const godPlayer = await prisma.players.findFirst({
+  console.log("[seed] ensuring GOD player exists")
+  await prisma.players.upsert({
     where: {
       name: "GOD"
-    }
-  })
-
-  if (!godPlayer && godAccount) {
-    await prisma.players.create({
-      data: {
-        id: 7,
+    },
+    create: {
+      id: 7,
         name: "GOD",
         group_id: 6,
-        account_id: godAccount.id,
+        account_id: account.id,
         level: 2,
         vocation: 0,
         health: 155,
@@ -167,16 +154,18 @@ async function main() {
         skill_axe_tries: 0,
         skill_dist: 10,
         skill_dist_tries: 0,
-      }
-    })
-  }
+    },
+    update: {}
+  })
+
+
 
   const samplePlayers = [
     {
       id: 1,
       name: 'Rook Sample',
       group_id: 1,
-      account_id: 1,
+      account_id: account.id,
       level: 2,
       vocation: 0,
       health: 155,
@@ -208,7 +197,7 @@ async function main() {
       id: 2,
       name: 'Sorcerer Sample',
       group_id: 1,
-      account_id: 1,
+      account_id: account.id,
       level: 8,
       vocation: 1,
       health: 185,
@@ -240,7 +229,7 @@ async function main() {
       id: 3,
       name: 'Druid Sample',
       group_id: 1,
-      account_id: 1,
+      account_id: account.id,
       level: 8,
       vocation: 2,
       health: 185,
@@ -272,7 +261,7 @@ async function main() {
       id: 4,
       name: 'Paladin Sample',
       group_id: 1,
-      account_id: 1,
+      account_id: account.id,
       level: 8,
       vocation: 3,
       health: 185,
@@ -304,7 +293,7 @@ async function main() {
       id: 5,
       name: 'Knight Sample',
       group_id: 1,
-      account_id: 1,
+      account_id: account.id,
       level: 8,
       vocation: 4,
       health: 185,
@@ -336,7 +325,7 @@ async function main() {
       id: 6,
       name: 'Monk Sample',
       group_id: 1,
-      account_id: 1,
+      account_id: account.id,
       level: 8,
       vocation: 9,
       health: 185,
@@ -366,28 +355,22 @@ async function main() {
     },
   ]
 
-  console.log("[seed] Creating sample players")
   for (const playerData of samplePlayers) {
-    const existing = await prisma.players.findFirst({
+    console.log(`[seed] ensuring sample player exists: ${playerData.name}`)
+    await prisma.players.upsert({
       where: {
         name: playerData.name
-      }
+      },
+      create: playerData,
+      update: {}
     })
-
-    if (!existing) {
-      await prisma.players.create({
-        data: playerData
-      })
-      console.log(`[seed] Created sample player: ${playerData.name}`)
-    } else {
-      console.log(`[seed] Sample player already exists: ${playerData.name}`)
-    }
   }
+
 
   console.log("[seed] Ensuring world Miforge exists")
   await prisma.worlds.upsert({
     where: {
-      name: "Miforge"
+      name: env.SERVER_NAME
     },
     create: {
       ip: env.SERVER_HOST,

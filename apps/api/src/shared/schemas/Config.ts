@@ -7,6 +7,7 @@ export const MiforgeConfigSchema = z.object({
 	}),
 	account: z.object({
 		emailConfirmationRequired: z.boolean().default(false),
+		passwordResetConfirmationRequired: z.boolean().default(false),
 	}),
 });
 
