@@ -1,3 +1,4 @@
+import type React from "react";
 import { useState } from "react";
 import { cn } from "@/sdk/utils/cn";
 
@@ -9,11 +10,11 @@ const Icons = {
 type Props = {
 	icon: keyof typeof Icons;
 	title?: string;
-	content: string;
 	inverted?: boolean;
+	children?: React.ReactNode;
 };
 
-export const NewstickerItem = ({ icon, content, title, inverted }: Props) => {
+export const NewstickerItem = ({ icon, children, title, inverted }: Props) => {
 	const [open, setOpen] = useState(false);
 	const date = new Date().toLocaleDateString("pt-BR", {
 		day: "2-digit",
@@ -21,38 +22,87 @@ export const NewstickerItem = ({ icon, content, title, inverted }: Props) => {
 		year: "numeric",
 	});
 
+	const handleToggle = () => setOpen((prev) => !prev);
+
+	const handleContentClick = (e: React.MouseEvent<HTMLSpanElement>) => {
+		const target = e.target as HTMLElement;
+		if (target.closest("a")) {
+			e.stopPropagation();
+		}
+	};
+
 	return (
-		<article
+		<button
 			className={cn(
-				"flex cursor-pointer select-none flex-row items-start gap-1 overflow-hidden p-0.5 font-roboto text-secondary text-xs",
+				"cursor-pointer select-none p-0.5 font-roboto text-secondary text-xs",
 				{
 					"bg-tibia-500": inverted,
 					"bg-tibia-600": !inverted,
 				},
 			)}
-			onClick={() => setOpen(!open)}
+			onClick={handleToggle}
+			type="button"
 		>
-			<img src={Icons[icon]} alt={`${icon}-icon`} />
-			<span className="min-w-max">{date}</span>
-			<span>-</span>
-			{title && (
-				<span className="whitespace-nowrap font-bold capitalize">
-					[{title}]
-				</span>
-			)}
-			<span
-				className={cn("overflow-hidden transition-all", {
-					"line-clamp-6": open,
-					"line-clamp-1 h-4": !open,
-				})}
+			{/* HEADER */}
+			<div className="flex flex-row items-start gap-1">
+				<img src={Icons[icon]} alt={`${icon}-icon`} />
+				<span className="min-w-max">{date} - </span>
+
+				{title && (
+					<span className="whitespace-nowrap font-bold capitalize">
+						[{title}]
+					</span>
+				)}
+
+				{/* PREVIEW MOBILE */}
+				<button
+					className={cn(
+						"flex-1 cursor-pointer overflow-hidden text-start transition-all md:hidden",
+						{
+							"line-clamp-1 h-4": !open,
+							hidden: open,
+						},
+					)}
+					onClick={handleContentClick}
+					type="button"
+				>
+					{children}
+				</button>
+
+				{/* DESKTOP INLINE */}
+				<button
+					className={cn(
+						"hidden flex-1 cursor-pointer overflow-hidden text-start transition-all md:block",
+						{
+							"md:line-clamp-6": open,
+							"md:line-clamp-1 md:h-4": !open,
+						},
+					)}
+					onClick={handleContentClick}
+					type="button"
+				>
+					{children}
+				</button>
+
+				<img
+					src={open ? "/assets/buttons/minus.gif" : "/assets/buttons/plus.gif"}
+					alt="newsticker-toggle"
+					className="mt-0.5 mr-0.5 ml-auto"
+				/>
+			</div>
+
+			{/* MOBILE: BLOCO DEBAIXO QUANDO ABRE */}
+			<div
+				className={cn(
+					"mt-1 overflow-hidden text-start transition-all md:hidden",
+					{
+						"max-h-0 opacity-0": !open,
+						"max-h-96 opacity-100": open,
+					},
+				)}
 			>
-				{content}
-			</span>
-			<img
-				src={open ? "/assets/buttons/minus.gif" : "/assets/buttons/plus.gif"}
-				alt="newsticker-plus"
-				className="mt-0.5 mr-0.5 ml-auto"
-			/>
-		</article>
+				<p className="text-xs leading-snug">{children}</p>
+			</div>
+		</button>
 	);
 };

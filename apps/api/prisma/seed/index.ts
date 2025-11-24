@@ -33,8 +33,8 @@ const miforgeConfig = MiforgeConfigSchema.decode({
     enabled: false,
     message: "We'll be back soon."
   },
-  notifications: {
-    emailEnabled: env.MAILER_ENABLED
+  account: {
+    emailConfirmationRequired: Boolean(env.MAILER_PROVIDER)
   }
 })
 
@@ -115,7 +115,8 @@ async function main() {
         email: "god@god.com",
         password: defaultPassword, // "god",
         name:"god",
-        type: 5
+        type: 5,
+        email_confirmed: true
       }
     })
     console.log("[seed] Created god account")

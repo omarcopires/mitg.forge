@@ -7,10 +7,10 @@ import {
 	Text,
 } from "@react-email/components";
 
-type RecoveryKeyEmailProps = {
+type RecoveryKeyEmailProps = Readonly<{
 	user: string;
 	code: string;
-};
+}>;
 
 export function RecoveryKeyEmail({ user, code }: RecoveryKeyEmailProps) {
 	return (

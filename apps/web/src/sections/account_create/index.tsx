@@ -2,6 +2,7 @@ import { Section } from "@/ui/Section";
 import { SectionHeader } from "@/ui/Section/Header";
 import { InnerSection } from "@/ui/Section/Inner";
 import { AccountCreateForm } from "./form";
+import { AccountCreateInformation } from "./information";
 
 export const AccountCreateSection = () => {
 	return (
@@ -10,6 +11,7 @@ export const AccountCreateSection = () => {
 				<h1 className="section-title">Create Account</h1>
 			</SectionHeader>
 			<InnerSection className="p-2">
+				<AccountCreateInformation />
 				<AccountCreateForm />
 			</InnerSection>
 		</Section>

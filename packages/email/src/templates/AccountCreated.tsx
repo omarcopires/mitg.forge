@@ -7,9 +7,9 @@ import {
 	Text,
 } from "@react-email/components";
 
-type AccountCratedEmailProps = {
+type AccountCratedEmailProps = Readonly<{
 	email: string;
-};
+}>;
 
 export function AccountCreatedEmail({ email }: AccountCratedEmailProps) {
 	return (

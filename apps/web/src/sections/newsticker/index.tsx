@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { Section } from "@/ui/Section";
 import { SectionHeader } from "@/ui/Section/Header";
 import { InnerSection } from "@/ui/Section/Inner";
@@ -14,33 +15,24 @@ export const NewstickerSection = () => {
 			</SectionHeader>
 			<InnerSection>
 				<div className="flex flex-col">
-					<NewstickerItem
-						icon="community"
-						content={content}
-						title="Battle Pass"
-					/>
-					<NewstickerItem
-						icon="community"
-						content={content}
-						title="Battle Pass"
-						inverted
-					/>
-					<NewstickerItem
-						icon="community"
-						content={content}
-						title="Battle Pass"
-					/>
-					<NewstickerItem
-						icon="community"
-						content={content}
-						title="Battle Pass"
-						inverted
-					/>
-					<NewstickerItem
-						icon="community"
-						content={content}
-						title="Battle Pass"
-					/>
+					<NewstickerItem icon="community" title="Battle Pass">
+						<Link to="/" className="text-blue-800 hover:underline">
+							Teste Link
+						</Link>{" "}
+						{content}
+					</NewstickerItem>
+					<NewstickerItem icon="community" title="Battle Pass" inverted>
+						{content}
+					</NewstickerItem>
+					<NewstickerItem icon="community" title="Battle Pass">
+						{content}
+					</NewstickerItem>
+					<NewstickerItem icon="community" title="Battle Pass" inverted>
+						{content}
+					</NewstickerItem>
+					<NewstickerItem icon="community" title="Battle Pass">
+						{content}
+					</NewstickerItem>
 				</div>
 			</InnerSection>
 		</Section>
