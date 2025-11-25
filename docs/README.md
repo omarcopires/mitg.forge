@@ -18,7 +18,7 @@ MiForge é um portal/AAC inspirado no tibia.com, desenvolvido para facilitar o g
 
 ## Exemplo
 
-![MiForge Example](./images/example.png)
+![MiForge Example](./images/example_1.png)
 
 ## Roadmap
 
