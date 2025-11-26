@@ -29,15 +29,25 @@ const BaseSchema = z.object({
 	confirmNewPassword: passwordSchema,
 });
 
-const FormSchemaWithCode = z.object({
-	...BaseSchema.shape,
-	code: z.string().max(100),
-});
+const FormSchemaWithCode = z
+	.object({
+		...BaseSchema.shape,
+		code: z.string().max(100),
+	})
+	.refine((data) => data.newPassword === data.confirmNewPassword, {
+		message: "Passwords do not match",
+		path: ["confirmNewPassword"],
+	});
 
-const FormSchemaWithoutCode = z.object({
-	...BaseSchema.shape,
-	oldPassword: simplePasswordSchema,
-});
+const FormSchemaWithoutCode = z
+	.object({
+		...BaseSchema.shape,
+		oldPassword: simplePasswordSchema,
+	})
+	.refine((data) => data.newPassword === data.confirmNewPassword, {
+		message: "Passwords do not match",
+		path: ["confirmNewPassword"],
+	});
 
 type FormValuesWithCode = z.infer<typeof FormSchemaWithCode>;
 type FormValuesWithoutCode = z.infer<typeof FormSchemaWithoutCode>;
