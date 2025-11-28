@@ -901,4 +901,98 @@ export class AccountsService {
 			to: account.email,
 		});
 	}
+
+	@Catch()
+	async changeEmailWithPassword({
+		newEmail,
+		password,
+	}: {
+		newEmail: string;
+		password: string;
+	}) {
+		const config = await this.configRepository.findConfig();
+
+		if (config.account.emailChangeConfirmationRequired) {
+			throw new ORPCError("FORBIDDEN", {
+				message:
+					"Changing email with password is disabled when email change confirmation is required. Please use the email change confirmation flow.",
+			});
+		}
+
+		const session = this.metadata.session();
+
+		const account = await this.accountRepository.findByEmail(session.email);
+
+		if (!account) {
+			throw new ORPCError("NOT_FOUND", {
+				message: "Account not found",
+			});
+		}
+
+		if (account.email === newEmail) {
+			throw new ORPCError("UNPROCESSABLE_CONTENT", {
+				message: "The new email address must be different from the current one",
+			});
+		}
+
+		const oldEmail = account.email;
+
+		const isPasswordValid = this.hasherCrypto.compare(
+			password,
+			account.password,
+		);
+
+		if (!isPasswordValid) {
+			throw new ORPCError("UNAUTHORIZED", {
+				message: "Invalid credentials",
+			});
+		}
+
+		const newEmailInUse = await this.accountRepository.findByEmail(newEmail);
+
+		if (newEmailInUse) {
+			throw new ORPCError("CONFLICT", {
+				message: "The new email is already in use by another account",
+			});
+		}
+
+		const characters =
+			await this.playersRepository.allCharactersWithOnlineStatus(account.id);
+
+		const anyCharacterOnline = characters.some((char) => char.online);
+
+		if (anyCharacterOnline) {
+			throw new ORPCError("FORBIDDEN", {
+				message:
+					"Cannot change email while one or more characters are online. Please log out all characters and try again.",
+			});
+		}
+
+		await this.accountRepository.updateEmail(account.id, newEmail);
+
+		await this.auditRepository.createAudit("CHANGED_EMAIL_WITH_PASSWORD", {
+			details: `Email changed from ${oldEmail} to ${newEmail} using password`,
+			success: true,
+		});
+
+		await this.sessionRepository.clearAllSessionByAccountId(account.id);
+
+		this.emailQueue.add({
+			kind: "EmailJob",
+			template: "AccountChangedEmail",
+			props: {
+				newEmail: newEmail,
+			},
+			subject: "Your email address has been changed",
+			to: oldEmail,
+		});
+
+		this.emailQueue.add({
+			kind: "EmailJob",
+			template: "AccountNewEmail",
+			props: {},
+			subject: "New email address added to your account",
+			to: newEmail,
+		});
+	}
 }

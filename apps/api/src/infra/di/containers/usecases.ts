@@ -1,6 +1,7 @@
 import { container, Lifecycle } from "tsyringe";
 import {
 	AccountCancelDeleteCharacterUseCase,
+	AccountChangeEmailWithPasswordUseCase,
 	AccountCharactersBySessionUseCase,
 	AccountConfirmEmailUseCase,
 	AccountCreateCharacterUseCase,
@@ -133,6 +134,11 @@ export function registerUseCases() {
 	container.register(
 		TOKENS.AccountRegistrationUseCase,
 		{ useClass: AccountRegistrationUseCase },
+		{ lifecycle: Lifecycle.ResolutionScoped },
+	);
+	container.register(
+		TOKENS.AccountChangeEmailWithPasswordUseCase,
+		{ useClass: AccountChangeEmailWithPasswordUseCase },
 		{ lifecycle: Lifecycle.ResolutionScoped },
 	);
 

@@ -11,6 +11,7 @@ import type {
 } from "@/application/services";
 import type {
 	AccountCancelDeleteCharacterUseCase,
+	AccountChangeEmailWithPasswordUseCase,
 	AccountCharactersBySessionUseCase,
 	AccountConfirmEmailUseCase,
 	AccountCreateCharacterUseCase,
@@ -183,6 +184,10 @@ export const TOKENS = {
 	AccountChangePasswordWithTokenUseCase: token<ChangePasswordWithTokenUseCase>(
 		"AccountChangePasswordWithTokenUseCase",
 	),
+	AccountChangeEmailWithPasswordUseCase:
+		token<AccountChangeEmailWithPasswordUseCase>(
+			"AccountChangeEmailWithPasswordUseCase",
+		),
 
 	WorldsListUseCase: token<WorldsListUseCase>("WorldsListUseCase"),
 
