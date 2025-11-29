@@ -10,6 +10,13 @@ export const MiforgeConfigSchema = z.object({
 		emailChangeConfirmationRequired: z.boolean().default(true),
 		passwordResetConfirmationRequired: z.boolean().default(false),
 	}),
+	mailer: z
+		.object({
+			enabled: z.boolean().default(false),
+		})
+		.default({
+			enabled: false,
+		}),
 });
 
 export type MiforgeConfig = z.infer<typeof MiforgeConfigSchema>;
