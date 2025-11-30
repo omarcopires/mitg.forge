@@ -1,24 +1,33 @@
 import { ORPCError } from "@orpc/client";
 import { inject, injectable } from "tsyringe";
 import { Catch } from "@/application/decorators/Catch";
-import type { EmailLinks, RandomCode } from "@/domain/modules";
+import type { EmailLinks, HasherCrypto } from "@/domain/modules";
 import type {
 	AccountConfirmationsRepository,
 	AccountRepository,
+	AuditRepository,
+	SessionRepository,
 } from "@/domain/repositories";
 import { TOKENS } from "@/infra/di/tokens";
 import type { EmailQueue } from "@/jobs/queue";
+import type { AccountConfirmationsService } from "../accountConfirmations";
 
 @injectable()
 export class LostAccountService {
 	constructor(
 		@inject(TOKENS.AccountRepository)
 		private readonly accountRepository: AccountRepository,
-		@inject(TOKENS.RandomCode) private readonly randomCode: RandomCode,
 		@inject(TOKENS.AccountConfirmationsRepository)
 		private readonly accountConfirmationsRepository: AccountConfirmationsRepository,
 		@inject(TOKENS.EmailQueue) private readonly emailQueue: EmailQueue,
 		@inject(TOKENS.EmailLinks) private readonly emailLinks: EmailLinks,
+		@inject(TOKENS.AccountConfirmationsService)
+		private readonly accountConfirmationsService: AccountConfirmationsService,
+		@inject(TOKENS.HasherCrypto) private readonly hasherCrypto: HasherCrypto,
+		@inject(TOKENS.AuditRepository)
+		private readonly auditRepository: AuditRepository,
+		@inject(TOKENS.SessionRepository)
+		private readonly sessionRepository: SessionRepository,
 	) {}
 
 	private async accountExistis(emailOrCharacterName: string) {
@@ -56,10 +65,6 @@ export class LostAccountService {
 			});
 		}
 
-		const resetToken = this.randomCode.generate(24, "HASH");
-		const expiresAt = new Date();
-		expiresAt.setMinutes(expiresAt.getMinutes() + 30);
-
 		const alreadyHasResetActive =
 			await this.accountConfirmationsRepository.findByAccountAndType(
 				account.id,
@@ -72,10 +77,13 @@ export class LostAccountService {
 			});
 		}
 
+		const { expiresAt, token, tokenHash } =
+			await this.accountConfirmationsService.generateTokenAndHash(30);
+
 		await this.accountConfirmationsRepository.create(account.id, {
 			channel: "LINK",
 			type: "LOST_PASSWORD_RESET",
-			token: resetToken,
+			tokenHash: tokenHash,
 			expiresAt,
 		});
 
@@ -83,10 +91,63 @@ export class LostAccountService {
 			kind: "EmailJob",
 			template: "LostAccountPasswordReset",
 			props: {
-				link: this.emailLinks.links.lostPasswordReset(resetToken),
+				link: this.emailLinks.links.lostPasswordReset(token),
 			},
 			to: account.email,
 			subject: "Password Reset Request",
+		});
+	}
+
+	@Catch()
+	async resetPasswordWithToken(rawToken: string, newPassword: string) {
+		const confirmation =
+			await this.accountConfirmationsService.isValid(rawToken);
+
+		const account = await this.accountRepository.findById(
+			confirmation.accountId,
+		);
+
+		if (!account) {
+			throw new ORPCError("NOT_FOUND", {
+				message: "Account not found.",
+			});
+		}
+
+		const oldPassword = account.password;
+
+		const isNewPasswordSameAsOld = this.hasherCrypto.compare(
+			newPassword,
+			oldPassword,
+		);
+
+		if (isNewPasswordSameAsOld) {
+			throw new ORPCError("UNPROCESSABLE_CONTENT", {
+				message: "The new password cannot be the same as the old password.",
+			});
+		}
+
+		await this.accountConfirmationsService.verifyConfirmation(
+			confirmation,
+			rawToken,
+		);
+
+		const hashedNewPassword = this.hasherCrypto.hash(newPassword);
+
+		await this.accountRepository.updatePassword(account.id, hashedNewPassword);
+
+		await this.sessionRepository.clearAllSessionByAccountId(account.id);
+
+		await this.auditRepository.createAudit("LOST_RESET_PASSWORD_WITH_TOKEN", {
+			details: "Password reset using lost account flow. With token generated.",
+			accountId: account.id,
+		});
+
+		this.emailQueue.add({
+			kind: "EmailJob",
+			template: "AccountPasswordChanged",
+			props: {},
+			subject: "Your password has been changed",
+			to: account.email,
 		});
 	}
 }

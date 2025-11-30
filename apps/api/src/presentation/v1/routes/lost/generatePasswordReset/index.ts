@@ -4,7 +4,7 @@ import { isNotAuthenticatedProcedure } from "@/presentation/procedures/isNotAuth
 export const generatePasswordResetRoute = isNotAuthenticatedProcedure
 	.route({
 		method: "POST",
-		path: "/account/generate-password-reset",
+		path: "/account/password/token/generate",
 		successStatus: 204,
 		summary: "Generate Password Reset",
 		description:

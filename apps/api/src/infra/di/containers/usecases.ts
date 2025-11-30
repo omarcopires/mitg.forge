@@ -26,6 +26,8 @@ import {
 	ConfigUpdateUseCase,
 	LostAccountFindByEmailOrCharacterNameUseCase,
 	LostAccountGeneratePasswordResetUseCase,
+	LostAccountResetPasswordWithTokenUseCase,
+	LostAccountVerifyConfirmationTokenUseCase,
 	SessionAuthenticatedUseCase,
 	SessionInfoUseCase,
 	SessionNotAuthenticatedUseCase,
@@ -176,6 +178,16 @@ export function registerUseCases() {
 	container.register(
 		TOKENS.LostAccountGeneratePasswordResetUseCase,
 		{ useClass: LostAccountGeneratePasswordResetUseCase },
+		{ lifecycle: Lifecycle.ResolutionScoped },
+	);
+	container.register(
+		TOKENS.LostAccountVerifyConfirmationTokenUseCase,
+		{ useClass: LostAccountVerifyConfirmationTokenUseCase },
+		{ lifecycle: Lifecycle.ResolutionScoped },
+	);
+	container.register(
+		TOKENS.LostAccountResetPasswordWithTokenUseCase,
+		{ useClass: LostAccountResetPasswordWithTokenUseCase },
 		{ lifecycle: Lifecycle.ResolutionScoped },
 	);
 

@@ -7,8 +7,8 @@ export class EmailLinks {
 
 	readonly links = {
 		accountEmailChangePreview: (token: string) =>
-			`${this.baseUrl}/account/email/change/${token}/preview`,
+			`${this.baseUrl}/account/email/change/${encodeURIComponent(token)}/preview`,
 		lostPasswordReset: (token: string) =>
-			`${this.baseUrl}/account/lost/password_reset/${token}`,
+			`${this.baseUrl}/account/lost/${encodeURIComponent(token)}/password_reset`,
 	};
 }

@@ -37,6 +37,8 @@ import type {
 	ConfigUpdateUseCase,
 	LostAccountFindByEmailOrCharacterNameUseCase,
 	LostAccountGeneratePasswordResetUseCase,
+	LostAccountResetPasswordWithTokenUseCase,
+	LostAccountVerifyConfirmationTokenUseCase,
 	SessionAuthenticatedUseCase,
 	SessionInfoUseCase,
 	SessionNotAuthenticatedUseCase,
@@ -60,6 +62,7 @@ import type {
 	RandomCode,
 	RecoveryKey,
 	RootLogger,
+	TokenHasher,
 } from "@/domain/modules";
 import type {
 	AccountConfirmationsRepository,
@@ -112,6 +115,7 @@ export const TOKENS = {
 	CacheKeys: token<CacheKeys>("CacheKeys"),
 	RandomCode: token<RandomCode>("RandomCode"),
 	EmailLinks: token<EmailLinks>("EmailLinks"),
+	TokenHasher: token<TokenHasher>("TokenHasher"),
 
 	// Crypto
 	HasherCrypto: token<HasherCrypto>("HasherCrypto"),
@@ -217,6 +221,14 @@ export const TOKENS = {
 	LostAccountGeneratePasswordResetUseCase:
 		token<LostAccountGeneratePasswordResetUseCase>(
 			"LostAccountGeneratePasswordResetUseCase",
+		),
+	LostAccountVerifyConfirmationTokenUseCase:
+		token<LostAccountVerifyConfirmationTokenUseCase>(
+			"LostAccountVerifyConfirmationTokenUseCase",
+		),
+	LostAccountResetPasswordWithTokenUseCase:
+		token<LostAccountResetPasswordWithTokenUseCase>(
+			"LostAccountResetPasswordWithTokenUseCase",
 		),
 
 	WorldsListUseCase: token<WorldsListUseCase>("WorldsListUseCase"),

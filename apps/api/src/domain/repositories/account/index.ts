@@ -94,6 +94,14 @@ export class AccountRepository {
 		});
 	}
 
+	async findById(id: number) {
+		return this.prisma.accounts.findUnique({
+			where: {
+				id,
+			},
+		});
+	}
+
 	async findByEmail(email: string) {
 		return this.prisma.accounts.findUnique({
 			where: {

@@ -10,6 +10,19 @@ import { TOKENS } from "@/infra/di/tokens";
 export class AccountConfirmationsRepository {
 	constructor(@inject(TOKENS.Prisma) private readonly database: Prisma) {}
 
+	async findByToken(token: string) {
+		return this.database.miforge_account_confirmations.findFirst({
+			where: {
+				token,
+				expires_at: {
+					gte: new Date(),
+				},
+				confirmed_at: null,
+				cancelled_at: null,
+			},
+		});
+	}
+
 	async findByAccountAndType(
 		accountId: number,
 		type: MiforgeAccountConfirmationType,
@@ -45,7 +58,7 @@ export class AccountConfirmationsRepository {
 		data: {
 			type: MiforgeAccountConfirmationType;
 			channel: MiforgeAccountConfirmationChannel;
-			token: string;
+			tokenHash: string;
 			expiresAt: Date;
 			value?: string;
 		},
@@ -55,7 +68,7 @@ export class AccountConfirmationsRepository {
 				accountId,
 				channel: data.channel,
 				type: data.type,
-				token: data.token,
+				token: data.tokenHash,
 				expires_at: data.expiresAt,
 				value: data.value,
 			},

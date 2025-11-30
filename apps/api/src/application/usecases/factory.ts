@@ -23,10 +23,18 @@ export class UseCasesFactory {
 		const generatePasswordReset = this.di.resolve(
 			TOKENS.LostAccountGeneratePasswordResetUseCase,
 		);
+		const validateConfirmationToken = this.di.resolve(
+			TOKENS.LostAccountVerifyConfirmationTokenUseCase,
+		);
+		const resetPasswordWithToken = this.di.resolve(
+			TOKENS.LostAccountResetPasswordWithTokenUseCase,
+		);
 
 		return {
 			findByEmailOrCharacterName,
 			generatePasswordReset,
+			validateConfirmationToken,
+			resetPasswordWithToken,
 		} as const;
 	}
 
