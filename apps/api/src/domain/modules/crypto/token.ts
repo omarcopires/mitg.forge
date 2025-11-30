@@ -10,7 +10,7 @@ export class TokenHasher {
 		return createHmac("sha256", this.secret).update(token).digest("hex");
 	}
 
-	equals(token: string, hash: string): string | null {
+	verifyAndReturnHash(token: string, hash: string): string | null {
 		const computed = this.hash(token);
 
 		if (computed !== hash) {

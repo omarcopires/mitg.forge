@@ -30,7 +30,7 @@ export class LostAccountService {
 		private readonly sessionRepository: SessionRepository,
 	) {}
 
-	private async accountExistis(emailOrCharacterName: string) {
+	private async accountExists(emailOrCharacterName: string) {
 		const account =
 			await this.accountRepository.findByEmail(emailOrCharacterName);
 
@@ -39,7 +39,7 @@ export class LostAccountService {
 
 	@Catch()
 	async findByEmail(identifier: string) {
-		const account = await this.accountExistis(identifier);
+		const account = await this.accountExists(identifier);
 
 		if (!account) {
 			throw new ORPCError("NOT_FOUND", {
@@ -57,7 +57,7 @@ export class LostAccountService {
 		 * Example: max 3 requests per hour per IP or per account if available
 		 * Because using in router level we can also protect other use cases like login, registration, etc.
 		 */
-		const account = await this.accountExistis(identifier);
+		const account = await this.accountExists(identifier);
 
 		if (!account) {
 			throw new ORPCError("NOT_FOUND", {

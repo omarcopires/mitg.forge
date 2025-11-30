@@ -79,7 +79,10 @@ export class AccountConfirmationsService {
 		const rawToken = token;
 		const hashToken = confirmation.token;
 
-		const hashedRawToken = this.tokenHasher.equals(rawToken, hashToken);
+		const hashedRawToken = this.tokenHasher.verifyAndReturnHash(
+			rawToken,
+			hashToken,
+		);
 
 		if (!hashedRawToken) {
 			throw new ORPCError("UNAUTHORIZED", {

@@ -71,7 +71,7 @@ export const DialogResetPassword = ({ email, open, setOpen }: Props) => {
 				<InnerContainer>
 					<DialogHeader>
 						<DialogDescription>
-							A email will be sent to your registered email address with
+							An email will be sent to your registered email address with
 							instructions to reset your password.
 						</DialogDescription>
 					</DialogHeader>

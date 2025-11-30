@@ -21,7 +21,7 @@ import {
 import { Input } from "@/ui/Input";
 
 const FormSchema = z.object({
-	email: z.email("Invalid email address").max(60),
+	email: z.email("Invalid email address").max(60, "Email is too long"),
 });
 
 type FormValues = z.infer<typeof FormSchema>;
