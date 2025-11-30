@@ -5,11 +5,11 @@ import { Catch } from "@/application/decorators/Catch";
 import type {
 	Cookies,
 	DetectionChanges,
+	EmailLinks,
 	HasherCrypto,
 	JwtCrypto,
 	Metadata,
 	PlayerNameDetection,
-	RandomCode,
 	RecoveryKey,
 } from "@/domain/modules";
 import type {
@@ -65,11 +65,11 @@ export class AccountsService {
 		private readonly configRepository: ConfigRepository,
 		@inject(TOKENS.AccountConfirmationsRepository)
 		private readonly accountConfirmationsRepository: AccountConfirmationsRepository,
-		@inject(TOKENS.RandomCode) private readonly randomCode: RandomCode,
 		@inject(TOKENS.AccountConfirmationsService)
 		private readonly accountConfirmationsService: AccountConfirmationsService,
 		@inject(TOKENS.AuditRepository)
 		private readonly auditRepository: AuditRepository,
+		@inject(TOKENS.EmailLinks) private readonly emailLinks: EmailLinks,
 	) {}
 
 	@Catch()
@@ -153,19 +153,13 @@ export class AccountsService {
 			return newAccount;
 		}
 
-		/**
-		 * Generate a confirmation code and send to email and sabe this code in miforge_confirmations
-		 * with expiration date of 24 hours.
-		 */
-		const confirmationToken = this.randomCode.generate(24, "HASH");
-
-		const expiresAt = new Date();
-		expiresAt.setHours(expiresAt.getHours() + 24);
+		const { expiresAt, token, tokenHash } =
+			await this.accountConfirmationsService.generateTokenAndHash(24 * 60);
 
 		await this.accountConfirmationsRepository.create(newAccount.id, {
 			channel: "CODE",
 			expiresAt,
-			token: confirmationToken,
+			tokenHash: tokenHash,
 			type: "EMAIL_VERIFICATION",
 		});
 
@@ -173,7 +167,7 @@ export class AccountsService {
 			kind: "EmailJob",
 			template: "AccountConfirmationEmail",
 			props: {
-				token: confirmationToken,
+				token: token,
 			},
 			subject: "Confirm your email address",
 			to: newAccount.email,
@@ -793,10 +787,8 @@ export class AccountsService {
 			});
 		}
 
-		const resetToken = this.randomCode.generate(24, "HASH");
-
-		const expiresAt = new Date();
-		expiresAt.setMinutes(expiresAt.getMinutes() + 30);
+		const { expiresAt, token, tokenHash } =
+			await this.accountConfirmationsService.generateTokenAndHash(24 * 60);
 
 		/**
 		 * This check already considers unexpired confirmations only.
@@ -817,7 +809,7 @@ export class AccountsService {
 		await this.accountConfirmationsRepository.create(account.id, {
 			channel: "CODE",
 			expiresAt,
-			token: resetToken,
+			tokenHash: tokenHash,
 			type: "PASSWORD_RESET",
 		});
 
@@ -825,7 +817,7 @@ export class AccountsService {
 			kind: "EmailJob",
 			template: "AccountChangePasswordCode",
 			props: {
-				token: resetToken,
+				token: token,
 			},
 			subject: "Password Reset Request",
 			to: account.email,
@@ -1043,15 +1035,13 @@ export class AccountsService {
 			});
 		}
 
-		const token = this.randomCode.generate(24, "HASH");
-
-		const expiresAt = new Date();
-		expiresAt.setHours(expiresAt.getHours() + 24);
+		const { expiresAt, token, tokenHash } =
+			await this.accountConfirmationsService.generateTokenAndHash(24 * 60);
 
 		await this.accountConfirmationsRepository.create(account.id, {
 			channel: "LINK",
 			expiresAt,
-			token,
+			tokenHash: tokenHash,
 			value: newEmail,
 			type: "EMAIL_CHANGE",
 		});
@@ -1060,7 +1050,7 @@ export class AccountsService {
 			kind: "EmailJob",
 			template: "AccountConfirmationNewEmail",
 			props: {
-				link: `${env.FRONTEND_URL}/account/email/change/${token}/preview`,
+				link: this.emailLinks.links.accountEmailChangePreview(token),
 			},
 			subject: "Confirm your new email address",
 			to: account.email,
@@ -1080,11 +1070,11 @@ export class AccountsService {
 		}
 
 		const confirmation =
-			await this.accountConfirmationsRepository.findByAccountAndType(
-				account.id,
-				"EMAIL_CHANGE",
-				token,
-			);
+			await this.accountConfirmationsService.isValidByAccountAndType({
+				accountId: account.id,
+				rawToken: token,
+				type: "EMAIL_CHANGE",
+			});
 
 		if (!confirmation) {
 			throw new ORPCError("NOT_FOUND", {
@@ -1105,7 +1095,7 @@ export class AccountsService {
 	}
 
 	@Catch()
-	async confirmEmailChange(token: string) {
+	async confirmEmailChange(rawToken: string) {
 		const session = this.metadata.session();
 
 		const account = await this.accountRepository.findByEmail(session.email);
@@ -1136,7 +1126,7 @@ export class AccountsService {
 
 		await this.accountConfirmationsService.verifyConfirmation(
 			confirmation,
-			token,
+			rawToken,
 		);
 
 		const newEmail = confirmation.value;
@@ -1172,18 +1162,13 @@ export class AccountsService {
 		await this.sessionRepository.clearAllSessionByAccountId(account.id);
 		await this.accountRepository.resetConfirmEmail(newEmail);
 
-		/**
-		 * TODO: We can reutilize this confirmation code generation logic with create account function.
-		 */
-		const confirmEmailHash = this.randomCode.generate(24, "HASH");
-
-		const expiresAt = new Date();
-		expiresAt.setHours(expiresAt.getHours() + 24);
+		const { expiresAt, token, tokenHash } =
+			await this.accountConfirmationsService.generateTokenAndHash(24 * 60);
 
 		await this.accountConfirmationsRepository.create(account.id, {
 			channel: "CODE",
 			expiresAt,
-			token: confirmEmailHash,
+			tokenHash: tokenHash,
 			type: "EMAIL_VERIFICATION",
 		});
 
@@ -1191,7 +1176,7 @@ export class AccountsService {
 			kind: "EmailJob",
 			template: "AccountConfirmationEmail",
 			props: {
-				token: confirmEmailHash,
+				token: token,
 			},
 			subject: "Confirm your email address",
 			to: newEmail,

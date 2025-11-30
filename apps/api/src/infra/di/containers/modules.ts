@@ -4,6 +4,7 @@ import {
 	CacheKeys,
 	Cookies,
 	DetectionChanges,
+	EmailLinks,
 	HasherCrypto,
 	JwtCrypto,
 	Metadata,
@@ -11,6 +12,7 @@ import {
 	PlayerNameDetection,
 	RandomCode,
 	RecoveryKey,
+	TokenHasher,
 } from "@/domain/modules";
 import { TOKENS } from "../tokens";
 
@@ -69,6 +71,16 @@ export function registerModules() {
 	container.register(
 		TOKENS.RandomCode,
 		{ useClass: RandomCode },
+		{ lifecycle: Lifecycle.Singleton },
+	);
+	container.register(
+		TOKENS.EmailLinks,
+		{ useClass: EmailLinks },
+		{ lifecycle: Lifecycle.Singleton },
+	);
+	container.register(
+		TOKENS.TokenHasher,
+		{ useClass: TokenHasher },
 		{ lifecycle: Lifecycle.Singleton },
 	);
 }

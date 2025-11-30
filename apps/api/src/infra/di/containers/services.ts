@@ -4,6 +4,7 @@ import {
 	AccountsService,
 	AuditService,
 	ConfigService,
+	LostAccountService,
 	PlayersService,
 	SessionService,
 	TibiaClientService,
@@ -50,6 +51,11 @@ export function registerServices() {
 	container.register(
 		TOKENS.ConfigService,
 		{ useClass: ConfigService },
+		{ lifecycle: Lifecycle.ResolutionScoped },
+	);
+	container.register(
+		TOKENS.LostAccountService,
+		{ useClass: LostAccountService },
 		{ lifecycle: Lifecycle.ResolutionScoped },
 	);
 }

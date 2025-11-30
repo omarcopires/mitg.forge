@@ -4,6 +4,7 @@ import type {
 	AccountsService,
 	AuditService,
 	ConfigService,
+	LostAccountService,
 	PlayersService,
 	SessionService,
 	TibiaClientService,
@@ -34,6 +35,10 @@ import type {
 	ChangePasswordWithTokenUseCase,
 	ConfigInfoUseCase,
 	ConfigUpdateUseCase,
+	LostAccountFindByEmailOrCharacterNameUseCase,
+	LostAccountGeneratePasswordResetUseCase,
+	LostAccountResetPasswordWithTokenUseCase,
+	LostAccountVerifyConfirmationTokenUseCase,
 	SessionAuthenticatedUseCase,
 	SessionInfoUseCase,
 	SessionNotAuthenticatedUseCase,
@@ -47,6 +52,7 @@ import type {
 	CacheKeys,
 	Cookies,
 	DetectionChanges,
+	EmailLinks,
 	HasherCrypto,
 	JwtCrypto,
 	Logger,
@@ -56,6 +62,7 @@ import type {
 	RandomCode,
 	RecoveryKey,
 	RootLogger,
+	TokenHasher,
 } from "@/domain/modules";
 import type {
 	AccountConfirmationsRepository,
@@ -107,6 +114,8 @@ export const TOKENS = {
 	Cache: token<Cache>("Cache"),
 	CacheKeys: token<CacheKeys>("CacheKeys"),
 	RandomCode: token<RandomCode>("RandomCode"),
+	EmailLinks: token<EmailLinks>("EmailLinks"),
+	TokenHasher: token<TokenHasher>("TokenHasher"),
 
 	// Crypto
 	HasherCrypto: token<HasherCrypto>("HasherCrypto"),
@@ -140,6 +149,7 @@ export const TOKENS = {
 	PlayersService: token<PlayersService>("PlayersService"),
 	AuditService: token<AuditService>("AuditService"),
 	ConfigService: token<ConfigService>("ConfigService"),
+	LostAccountService: token<LostAccountService>("LostAccountService"),
 
 	// UseCases
 	AccountLoginUseCase: token<AccountLoginUseCase>("LoginUseCase"),
@@ -203,6 +213,23 @@ export const TOKENS = {
 	AccountConfirmEmailChangeUseCase: token<AccountConfirmEmailChangeUseCase>(
 		"AccountConfirmEmailChangeUseCase",
 	),
+
+	LostAccountFindByEmailOrCharacterNameUseCase:
+		token<LostAccountFindByEmailOrCharacterNameUseCase>(
+			"LostAccountFindByEmailOrCharacterNameUseCase",
+		),
+	LostAccountGeneratePasswordResetUseCase:
+		token<LostAccountGeneratePasswordResetUseCase>(
+			"LostAccountGeneratePasswordResetUseCase",
+		),
+	LostAccountVerifyConfirmationTokenUseCase:
+		token<LostAccountVerifyConfirmationTokenUseCase>(
+			"LostAccountVerifyConfirmationTokenUseCase",
+		),
+	LostAccountResetPasswordWithTokenUseCase:
+		token<LostAccountResetPasswordWithTokenUseCase>(
+			"LostAccountResetPasswordWithTokenUseCase",
+		),
 
 	WorldsListUseCase: token<WorldsListUseCase>("WorldsListUseCase"),
 
