@@ -16,6 +16,28 @@ import type { WorldsListUseCase } from "./worlds/list";
 export class UseCasesFactory {
 	constructor(private readonly di: DependencyContainer) {}
 
+	get lostAccount() {
+		const findByEmailOrCharacterName = this.di.resolve(
+			TOKENS.LostAccountFindByEmailOrCharacterNameUseCase,
+		);
+		const generatePasswordReset = this.di.resolve(
+			TOKENS.LostAccountGeneratePasswordResetUseCase,
+		);
+		const validateConfirmationToken = this.di.resolve(
+			TOKENS.LostAccountVerifyConfirmationTokenUseCase,
+		);
+		const resetPasswordWithToken = this.di.resolve(
+			TOKENS.LostAccountResetPasswordWithTokenUseCase,
+		);
+
+		return {
+			findByEmailOrCharacterName,
+			generatePasswordReset,
+			validateConfirmationToken,
+			resetPasswordWithToken,
+		} as const;
+	}
+
 	get account() {
 		const create = this.di.resolve(TOKENS.AccountCreateUseCase);
 		const login = this.di.resolve<AccountLoginUseCase>(
@@ -55,6 +77,27 @@ export class UseCasesFactory {
 		);
 		const auditHistory = this.di.resolve(TOKENS.AccountAuditUseCase);
 		const confirmEmail = this.di.resolve(TOKENS.AccountConfirmEmailUseCase);
+		const changePasswordWithOld = this.di.resolve(
+			TOKENS.AccountChangePasswordWithOldUseCase,
+		);
+		const generatePasswordReset = this.di.resolve(
+			TOKENS.AccountGeneratePasswordResetUseCase,
+		);
+		const changePasswordWithToken = this.di.resolve(
+			TOKENS.AccountChangePasswordWithTokenUseCase,
+		);
+		const changeEmailWithPassword = this.di.resolve(
+			TOKENS.AccountChangeEmailWithPasswordUseCase,
+		);
+		const generateEmailChange = this.di.resolve(
+			TOKENS.AccountGenerateEmailChangeUseCase,
+		);
+		const previewEmailChange = this.di.resolve(
+			TOKENS.AccountPreviewEmailChangeUseCase,
+		);
+		const confirmEmailChange = this.di.resolve(
+			TOKENS.AccountConfirmEmailChangeUseCase,
+		);
 
 		return {
 			create,
@@ -72,6 +115,13 @@ export class UseCasesFactory {
 			cancelDeleteCharacter,
 			auditHistory,
 			confirmEmail,
+			changePasswordWithOld,
+			generatePasswordReset,
+			changePasswordWithToken,
+			changeEmailWithPassword,
+			generateEmailChange,
+			previewEmailChange,
+			confirmEmailChange,
 		} as const;
 	}
 

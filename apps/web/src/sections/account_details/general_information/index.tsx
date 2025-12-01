@@ -124,10 +124,10 @@ export const AccountDetailGeneralInformation = () => {
 				<ButtonImageLink variant="red" to="/">
 					Terminate Account
 				</ButtonImageLink>
-				<ButtonImageLink variant="info" to="/">
+				<ButtonImageLink variant="info" to="/account/reset_password">
 					Change Password
 				</ButtonImageLink>
-				<ButtonImageLink variant="info" to="/">
+				<ButtonImageLink variant="info" to="/account/email/change">
 					Change Email
 				</ButtonImageLink>
 			</div>

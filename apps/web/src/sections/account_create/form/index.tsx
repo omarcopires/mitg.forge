@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { passwordSchema } from "@miforge/core/schemas";
 import { ORPCError } from "@orpc/client";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
@@ -27,17 +28,8 @@ import { Label } from "@/ui/Label";
 const FormSchema = z
 	.object({
 		email: z.email(),
-		password: z
-			.string()
-			.min(8)
-			.max(100)
-			.regex(/[A-Z]/, {
-				message: "Password must contain at least one uppercase letter",
-			})
-			.regex(/[\W_]/, {
-				message: "Password must contain at least one special character",
-			}),
-		confirmPassword: z.string().max(100),
+		password: passwordSchema,
+		confirmPassword: passwordSchema,
 		terms: z.boolean().refine((val) => val === true, {
 			message: "You must accept the terms and conditions",
 		}),

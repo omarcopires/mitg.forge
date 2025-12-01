@@ -4,6 +4,7 @@ import type {
 	AccountsService,
 	AuditService,
 	ConfigService,
+	LostAccountService,
 	PlayersService,
 	SessionService,
 	TibiaClientService,
@@ -11,7 +12,9 @@ import type {
 } from "@/application/services";
 import type {
 	AccountCancelDeleteCharacterUseCase,
+	AccountChangeEmailWithPasswordUseCase,
 	AccountCharactersBySessionUseCase,
+	AccountConfirmEmailChangeUseCase,
 	AccountConfirmEmailUseCase,
 	AccountCreateCharacterUseCase,
 	AccountCreateUseCase,
@@ -19,27 +22,37 @@ import type {
 	AccountDetailsBySessionUseCase,
 	AccountEditCharacterUseCase,
 	AccountFindCharacterUseCase,
+	AccountGenerateEmailChangeUseCase,
+	AccountGeneratePasswordResetUseCase,
 	AccountLoginUseCase,
 	AccountLogoutUseCase,
 	AccountPermissionedUseCase,
+	AccountPreviewEmailChangeUseCase,
 	AccountRegistrationUseCase,
 	AccountStoreHistoryUseCase,
 	AuditAccountUseCase,
+	ChangePasswordWithOldUseCase,
+	ChangePasswordWithTokenUseCase,
 	ConfigInfoUseCase,
 	ConfigUpdateUseCase,
+	LostAccountFindByEmailOrCharacterNameUseCase,
+	LostAccountGeneratePasswordResetUseCase,
+	LostAccountResetPasswordWithTokenUseCase,
+	LostAccountVerifyConfirmationTokenUseCase,
 	SessionAuthenticatedUseCase,
 	SessionInfoUseCase,
 	SessionNotAuthenticatedUseCase,
 	TibiaLoginUseCase,
 	WorldsListUseCase,
 } from "@/application/usecases";
-import type { Mailer, Prisma, Redis } from "@/domain/clients";
+import type { Mailer, OtsServerClient, Prisma, Redis } from "@/domain/clients";
 import type { AppLivePublisher } from "@/domain/clients/live/types";
 import type {
 	Cache,
 	CacheKeys,
 	Cookies,
 	DetectionChanges,
+	EmailLinks,
 	HasherCrypto,
 	JwtCrypto,
 	Logger,
@@ -49,6 +62,7 @@ import type {
 	RandomCode,
 	RecoveryKey,
 	RootLogger,
+	TokenHasher,
 } from "@/domain/modules";
 import type {
 	AccountConfirmationsRepository,
@@ -56,6 +70,7 @@ import type {
 	AuditRepository,
 	ConfigLiveRepository,
 	ConfigRepository,
+	OtsServerRepository,
 	PlayersRepository,
 	SessionRepository,
 } from "@/domain/repositories";
@@ -82,6 +97,7 @@ export const TOKENS = {
 	EventCommander: token<Redis>("EventCommander"),
 	EventSubscriber: token<Redis>("EventSubscriber"),
 	AppLivePublisher: token<AppLivePublisher>("AppLivePublisher"),
+	OtsServerClient: token<OtsServerClient>("OtsServerClient"),
 
 	// Queues
 	EmailQueue: token<EmailQueue>("EmailQueue"),
@@ -98,6 +114,8 @@ export const TOKENS = {
 	Cache: token<Cache>("Cache"),
 	CacheKeys: token<CacheKeys>("CacheKeys"),
 	RandomCode: token<RandomCode>("RandomCode"),
+	EmailLinks: token<EmailLinks>("EmailLinks"),
+	TokenHasher: token<TokenHasher>("TokenHasher"),
 
 	// Crypto
 	HasherCrypto: token<HasherCrypto>("HasherCrypto"),
@@ -118,6 +136,7 @@ export const TOKENS = {
 	AuditRepository: token<AuditRepository>("AuditRepository"),
 	ConfigLiveRepository: token<ConfigLiveRepository>("ConfigLiveRepository"),
 	ConfigRepository: token<ConfigRepository>("ConfigRepository"),
+	OtsServerRepository: token<OtsServerRepository>("OtsServerRepository"),
 
 	// Services
 	TibiaClientService: token<TibiaClientService>("TibiaClientService"),
@@ -130,6 +149,7 @@ export const TOKENS = {
 	PlayersService: token<PlayersService>("PlayersService"),
 	AuditService: token<AuditService>("AuditService"),
 	ConfigService: token<ConfigService>("ConfigService"),
+	LostAccountService: token<LostAccountService>("LostAccountService"),
 
 	// UseCases
 	AccountLoginUseCase: token<AccountLoginUseCase>("LoginUseCase"),
@@ -170,6 +190,46 @@ export const TOKENS = {
 	AccountConfirmEmailUseCase: token<AccountConfirmEmailUseCase>(
 		"AccountConfirmEmailUseCase",
 	),
+	AccountChangePasswordWithOldUseCase: token<ChangePasswordWithOldUseCase>(
+		"AccountChangePasswordWithOldUseCase",
+	),
+	AccountGeneratePasswordResetUseCase:
+		token<AccountGeneratePasswordResetUseCase>(
+			"AccountGeneratePasswordResetUseCase",
+		),
+	AccountChangePasswordWithTokenUseCase: token<ChangePasswordWithTokenUseCase>(
+		"AccountChangePasswordWithTokenUseCase",
+	),
+	AccountChangeEmailWithPasswordUseCase:
+		token<AccountChangeEmailWithPasswordUseCase>(
+			"AccountChangeEmailWithPasswordUseCase",
+		),
+	AccountGenerateEmailChangeUseCase: token<AccountGenerateEmailChangeUseCase>(
+		"AccountGenerateEmailChangeUseCase",
+	),
+	AccountPreviewEmailChangeUseCase: token<AccountPreviewEmailChangeUseCase>(
+		"AccountPreviewEmailChangeUseCase",
+	),
+	AccountConfirmEmailChangeUseCase: token<AccountConfirmEmailChangeUseCase>(
+		"AccountConfirmEmailChangeUseCase",
+	),
+
+	LostAccountFindByEmailOrCharacterNameUseCase:
+		token<LostAccountFindByEmailOrCharacterNameUseCase>(
+			"LostAccountFindByEmailOrCharacterNameUseCase",
+		),
+	LostAccountGeneratePasswordResetUseCase:
+		token<LostAccountGeneratePasswordResetUseCase>(
+			"LostAccountGeneratePasswordResetUseCase",
+		),
+	LostAccountVerifyConfirmationTokenUseCase:
+		token<LostAccountVerifyConfirmationTokenUseCase>(
+			"LostAccountVerifyConfirmationTokenUseCase",
+		),
+	LostAccountResetPasswordWithTokenUseCase:
+		token<LostAccountResetPasswordWithTokenUseCase>(
+			"LostAccountResetPasswordWithTokenUseCase",
+		),
 
 	WorldsListUseCase: token<WorldsListUseCase>("WorldsListUseCase"),
 

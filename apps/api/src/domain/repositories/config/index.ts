@@ -2,6 +2,7 @@ import { inject, injectable } from "tsyringe";
 import type { Prisma } from "@/domain/clients";
 import type { Cache, CacheKeys } from "@/domain/modules";
 import { TOKENS } from "@/infra/di/tokens";
+import { env } from "@/infra/env";
 import {
 	type MiforgeConfig,
 	MiforgeConfigSchema,
@@ -58,6 +59,9 @@ export class ConfigRepository {
 		const merged = MiforgeConfigSchema.parse({
 			...current,
 			...patch,
+			mailer: {
+				enabled: Boolean(env.MAILER_PROVIDER),
+			},
 		});
 
 		await this.database.miforge_config.upsert({

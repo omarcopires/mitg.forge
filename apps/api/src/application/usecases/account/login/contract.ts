@@ -1,9 +1,10 @@
+import { simplePasswordSchema } from "@miforge/core/schemas";
 import z from "zod";
 
 export const AccountLoginContractSchema = {
 	input: z.object({
 		email: z.email(),
-		password: z.string().min(1),
+		password: simplePasswordSchema,
 	}),
 	output: z.object({
 		token: z.string(),

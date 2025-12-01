@@ -10,24 +10,44 @@ import { TOKENS } from "@/infra/di/tokens";
 export class AccountConfirmationsRepository {
 	constructor(@inject(TOKENS.Prisma) private readonly database: Prisma) {}
 
+	async findByToken(tokenHash: string) {
+		return this.database.miforge_account_confirmations.findFirst({
+			where: {
+				token: tokenHash,
+				expires_at: {
+					gte: new Date(),
+				},
+				confirmed_at: null,
+				cancelled_at: null,
+			},
+		});
+	}
+
 	async findByAccountAndType(
 		accountId: number,
 		type: MiforgeAccountConfirmationType,
+		tokenHash?: string,
 	) {
 		return this.database.miforge_account_confirmations.findFirst({
 			where: {
 				accountId,
 				type,
+				expires_at: {
+					gte: new Date(),
+				},
+				confirmed_at: null,
+				cancelled_at: null,
+				...(tokenHash ? { token: tokenHash } : {}),
 			},
 		});
 	}
 
-	async findByAccountAndToken(accountId: number, token: string) {
+	async findByAccountAndToken(accountId: number, tokenHash: string) {
 		return this.database.miforge_account_confirmations.findUnique({
 			where: {
 				uq_token_account: {
 					accountId,
-					token,
+					token: tokenHash,
 				},
 			},
 		});
@@ -38,8 +58,9 @@ export class AccountConfirmationsRepository {
 		data: {
 			type: MiforgeAccountConfirmationType;
 			channel: MiforgeAccountConfirmationChannel;
-			token: string;
+			tokenHash: string;
 			expiresAt: Date;
+			value?: string;
 		},
 	) {
 		return this.database.miforge_account_confirmations.create({
@@ -47,19 +68,20 @@ export class AccountConfirmationsRepository {
 				accountId,
 				channel: data.channel,
 				type: data.type,
-				token: data.token,
+				token: data.tokenHash,
 				expires_at: data.expiresAt,
+				value: data.value,
 			},
 		});
 	}
 
-	async isExpired(accountId: number, code: string) {
+	async isExpired(accountId: number, hashToken: string) {
 		const record = await this.database.miforge_account_confirmations.findUnique(
 			{
 				where: {
 					uq_token_account: {
 						accountId,
-						token: code,
+						token: hashToken,
 					},
 				},
 				select: {

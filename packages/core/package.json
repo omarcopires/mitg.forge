@@ -14,11 +14,19 @@
 			"types": "./dist/geo.d.ts",
 			"import": "./dist/geo.js",
 			"require": "./dist/geo.js"
+		},
+		"./schemas": {
+			"types": "./dist/schemas.d.ts",
+			"import": "./dist/schemas.js",
+			"require": "./dist/schemas.js"
 		}
 	},
 	"files": [
 		"dist"
 	],
+	"peerDependencies": {
+		"zod": "catalog:"
+	},
 	"scripts": {
 		"clean": "rimraf ./dist",
 		"build": "tsdown",
@@ -27,6 +35,7 @@
 	"devDependencies": {
 		"rimraf": "^6.0.1",
 		"tsdown": "catalog:",
-		"typescript": "catalog:ts"
+		"typescript": "catalog:ts",
+		"zod": "catalog:"
 	}
 }

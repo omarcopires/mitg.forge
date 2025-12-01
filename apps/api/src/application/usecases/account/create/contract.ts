@@ -1,3 +1,4 @@
+import { passwordSchema } from "@miforge/core/schemas";
 import z from "zod";
 
 export const AccountCreateContractSchema = {
@@ -5,17 +6,8 @@ export const AccountCreateContractSchema = {
 		.object({
 			name: z.string().min(3).max(30).optional(),
 			email: z.email(),
-			password: z
-				.string()
-				.min(8)
-				.max(100)
-				.regex(/[A-Z]/, {
-					message: "Password must contain at least one uppercase letter",
-				})
-				.regex(/[\W_]/, {
-					message: "Password must contain at least one special character",
-				}),
-			confirmPassword: z.string().max(100),
+			password: passwordSchema,
+			confirmPassword: passwordSchema,
 		})
 		.superRefine(({ confirmPassword, password }, ctx) => {
 			if (confirmPassword === password) return;

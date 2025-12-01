@@ -47,16 +47,18 @@ export class AuditRepository {
 			metadata?: Record<string, unknown>;
 			errorCode?: string;
 			details?: string;
+			accountId?: number;
 		},
 	): Promise<void> {
 		const session = this.metadata.sessionOrNull();
 		const requestId = this.metadata.requestId();
 		const ip = this.metadata.ip();
 		const agent = this.metadata.userAgent();
+		const accountId = data?.accountId ?? session?.id ?? null;
 
 		await this.database.miforge_account_audit.create({
 			data: {
-				accountId: session?.id,
+				accountId,
 				action,
 				ip,
 				requestId,
@@ -77,4 +79,9 @@ const AuditAction = {
 	UPDATED_CHARACTER: "UPDATED_CHARACTER",
 	CREATED_CHARACTER: "CREATED_CHARACTER",
 	CREATED_ACCOUNT: "CREATED_ACCOUNT",
+	CHANGED_PASSWORD_WITH_OLD: "CHANGED_PASSWORD_WITH_OLD",
+	RESET_PASSWORD_WITH_TOKEN: "RESET_PASSWORD_WITH_TOKEN",
+	CHANGED_EMAIL_WITH_PASSWORD: "CHANGED_EMAIL_WITH_PASSWORD",
+	CHANGED_EMAIL_WITH_CONFIRMATION: "CHANGED_EMAIL_WITH_CONFIRMATION",
+	LOST_RESET_PASSWORD_WITH_TOKEN: "LOST_RESET_PASSWORD_WITH_TOKEN",
 } as const;

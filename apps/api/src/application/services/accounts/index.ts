@@ -5,16 +5,17 @@ import { Catch } from "@/application/decorators/Catch";
 import type {
 	Cookies,
 	DetectionChanges,
+	EmailLinks,
 	HasherCrypto,
 	JwtCrypto,
 	Metadata,
 	PlayerNameDetection,
-	RandomCode,
 	RecoveryKey,
 } from "@/domain/modules";
 import type {
 	AccountConfirmationsRepository,
 	AccountRepository,
+	AuditRepository,
 	ConfigRepository,
 	PlayersRepository,
 	SessionRepository,
@@ -64,13 +65,21 @@ export class AccountsService {
 		private readonly configRepository: ConfigRepository,
 		@inject(TOKENS.AccountConfirmationsRepository)
 		private readonly accountConfirmationsRepository: AccountConfirmationsRepository,
-		@inject(TOKENS.RandomCode) private readonly randomCode: RandomCode,
 		@inject(TOKENS.AccountConfirmationsService)
 		private readonly accountConfirmationsService: AccountConfirmationsService,
+		@inject(TOKENS.AuditRepository)
+		private readonly auditRepository: AuditRepository,
+		@inject(TOKENS.EmailLinks) private readonly emailLinks: EmailLinks,
 	) {}
 
 	@Catch()
 	async verifyEmail(email: string, token: string) {
+		/**
+		 * TODO - When change email occurs, we need to send a confirmation email.
+		 * But the actual template and subject need to be defined depending on the context.
+		 * If it's a new account, we send a welcome email.
+		 * If it's an email change, we send a email changed confirmation.
+		 */
 		const account = await this.accountRepository.findByEmail(email);
 
 		if (!account) {
@@ -144,19 +153,13 @@ export class AccountsService {
 			return newAccount;
 		}
 
-		/**
-		 * Generate a confirmation code and send to email and sabe this code in miforge_confirmations
-		 * with expiration date of 24 hours.
-		 */
-		const confirmationToken = this.randomCode.generate(24, "HASH");
-
-		const expiresAt = new Date();
-		expiresAt.setHours(expiresAt.getHours() + 24);
+		const { expiresAt, token, tokenHash } =
+			await this.accountConfirmationsService.generateTokenAndHash(24 * 60);
 
 		await this.accountConfirmationsRepository.create(newAccount.id, {
 			channel: "CODE",
 			expiresAt,
-			token: confirmationToken,
+			tokenHash: tokenHash,
 			type: "EMAIL_VERIFICATION",
 		});
 
@@ -164,7 +167,7 @@ export class AccountsService {
 			kind: "EmailJob",
 			template: "AccountConfirmationEmail",
 			props: {
-				token: confirmationToken,
+				token: token,
 			},
 			subject: "Confirm your email address",
 			to: newAccount.email,
@@ -266,9 +269,6 @@ export class AccountsService {
 			});
 		}
 
-		/**
-		 * TODO: Remove characters from this, to be in another route.
-		 */
 		return {
 			...account,
 			sessions: account.sessions,
@@ -506,10 +506,6 @@ export class AccountsService {
 				recoveryKey = this.recoveryKey.generate();
 			}
 
-			/**
-			 * TODO: Find a better way to handle subject and template naming conventions.
-			 * Maybe whe can implement i18n here as well.
-			 */
 			this.emailQueue.add({
 				kind: "EmailJob",
 				to: account.email,
@@ -711,6 +707,501 @@ export class AccountsService {
 
 		return {
 			scheduleDate: deletionDate,
+		};
+	}
+
+	@Catch()
+	async changePasswordWithOld({
+		oldPassword,
+		newPassword,
+	}: {
+		oldPassword: string;
+		newPassword: string;
+	}) {
+		const config = await this.configRepository.findConfig();
+
+		if (config.account.passwordResetConfirmationRequired) {
+			throw new ORPCError("FORBIDDEN", {
+				message:
+					"Changing password with old password is disabled when password reset confirmation is required. Please use the password reset flow.",
+			});
+		}
+
+		const session = this.metadata.session();
+
+		const account = await this.accountRepository.findByEmail(session.email);
+
+		if (!account) {
+			throw new ORPCError("NOT_FOUND", {
+				message: "Account not found",
+			});
+		}
+
+		const isOldPasswordValid = this.hasherCrypto.compare(
+			oldPassword,
+			account.password,
+		);
+
+		if (!isOldPasswordValid) {
+			throw new ORPCError("UNAUTHORIZED", {
+				message: "Invalid credentials",
+			});
+		}
+
+		const hashedNewPassword = this.hasherCrypto.hash(newPassword);
+
+		await this.accountRepository.updatePassword(account.id, hashedNewPassword);
+
+		await this.auditRepository.createAudit("CHANGED_PASSWORD_WITH_OLD", {
+			details: "Password changed using old password for account",
+			success: true,
+		});
+
+		this.emailQueue.add({
+			kind: "EmailJob",
+			template: "AccountChangePasswordWithOld",
+			props: {},
+			subject: "Your password has been changed",
+			to: account.email,
+		});
+	}
+
+	@Catch()
+	async generatePasswordReset() {
+		const config = await this.configRepository.findConfig();
+
+		if (!config.account.passwordResetConfirmationRequired) {
+			throw new ORPCError("FORBIDDEN", {
+				message:
+					"Password reset confirmation is disabled. Please use the change password with old password flow.",
+			});
+		}
+
+		const session = this.metadata.session();
+
+		const account = await this.accountRepository.findByEmail(session.email);
+
+		if (!account) {
+			throw new ORPCError("NOT_FOUND", {
+				message: "Account not found",
+			});
+		}
+
+		const { expiresAt, token, tokenHash } =
+			await this.accountConfirmationsService.generateTokenAndHash(24 * 60);
+
+		/**
+		 * This check already considers unexpired confirmations only.
+		 */
+		const alreadyHasResetActive =
+			await this.accountConfirmationsRepository.findByAccountAndType(
+				account.id,
+				"PASSWORD_RESET",
+			);
+
+		if (alreadyHasResetActive) {
+			throw new ORPCError("CONFLICT", {
+				message:
+					"A password reset is already active for this account. Please check your email or wait until it expires.",
+			});
+		}
+
+		await this.accountConfirmationsRepository.create(account.id, {
+			channel: "CODE",
+			expiresAt,
+			tokenHash: tokenHash,
+			type: "PASSWORD_RESET",
+		});
+
+		this.emailQueue.add({
+			kind: "EmailJob",
+			template: "AccountChangePasswordCode",
+			props: {
+				token: token,
+			},
+			subject: "Password Reset Request",
+			to: account.email,
+		});
+	}
+
+	@Catch()
+	async changePasswordWithToken({
+		newPassword,
+		token,
+	}: {
+		token: string;
+		newPassword: string;
+	}) {
+		const config = await this.configRepository.findConfig();
+
+		if (!config.account.passwordResetConfirmationRequired) {
+			throw new ORPCError("FORBIDDEN", {
+				message:
+					"Password reset confirmation is disabled. Please use the change password with old password flow.",
+			});
+		}
+
+		const session = this.metadata.session();
+
+		const account = await this.accountRepository.findByEmail(session.email);
+
+		if (!account) {
+			throw new ORPCError("NOT_FOUND", {
+				message: "Account not found",
+			});
+		}
+
+		const oldPassword = account.password;
+
+		const isNewPasswordSameAsOld = this.hasherCrypto.compare(
+			newPassword,
+			oldPassword,
+		);
+
+		if (isNewPasswordSameAsOld) {
+			throw new ORPCError("UNPROCESSABLE_CONTENT", {
+				message: "New password must be different from old password",
+			});
+		}
+
+		const confirmation =
+			await this.accountConfirmationsRepository.findByAccountAndType(
+				account.id,
+				"PASSWORD_RESET",
+			);
+
+		await this.accountConfirmationsService.verifyConfirmation(
+			confirmation,
+			token,
+		);
+
+		const hashedNewPassword = this.hasherCrypto.hash(newPassword);
+
+		await this.accountRepository.updatePassword(account.id, hashedNewPassword);
+
+		await this.auditRepository.createAudit("RESET_PASSWORD_WITH_TOKEN", {
+			details: "Password reset using confirmation token for account",
+			success: true,
+		});
+
+		this.emailQueue.add({
+			kind: "EmailJob",
+			template: "AccountPasswordChanged",
+			props: {},
+			subject: "Your password has been changed",
+			to: account.email,
+		});
+	}
+
+	@Catch()
+	async changeEmailWithPassword({
+		newEmail,
+		password,
+	}: {
+		newEmail: string;
+		password: string;
+	}) {
+		const config = await this.configRepository.findConfig();
+
+		if (config.account.emailChangeConfirmationRequired) {
+			throw new ORPCError("FORBIDDEN", {
+				message:
+					"Changing email with password is disabled when email change confirmation is required. Please use the email change confirmation flow.",
+			});
+		}
+
+		const session = this.metadata.session();
+
+		const account = await this.accountRepository.findByEmail(session.email);
+
+		if (!account) {
+			throw new ORPCError("NOT_FOUND", {
+				message: "Account not found",
+			});
+		}
+
+		if (account.email === newEmail) {
+			throw new ORPCError("UNPROCESSABLE_CONTENT", {
+				message: "The new email address must be different from the current one",
+			});
+		}
+
+		const oldEmail = account.email;
+
+		const isPasswordValid = this.hasherCrypto.compare(
+			password,
+			account.password,
+		);
+
+		if (!isPasswordValid) {
+			throw new ORPCError("UNAUTHORIZED", {
+				message: "Invalid credentials",
+			});
+		}
+
+		const newEmailInUse = await this.accountRepository.findByEmail(newEmail);
+
+		if (newEmailInUse) {
+			throw new ORPCError("CONFLICT", {
+				message: "The new email is already in use by another account",
+			});
+		}
+
+		const characters =
+			await this.playersRepository.allCharactersWithOnlineStatus(account.id);
+
+		const anyCharacterOnline = characters.some((char) => char.online);
+
+		if (anyCharacterOnline) {
+			throw new ORPCError("FORBIDDEN", {
+				message:
+					"Cannot change email while one or more characters are online. Please log out all characters and try again.",
+			});
+		}
+
+		await this.accountRepository.updateEmail(account.id, newEmail);
+
+		await this.auditRepository.createAudit("CHANGED_EMAIL_WITH_PASSWORD", {
+			details: `Email changed from ${oldEmail} to ${newEmail} using password`,
+			success: true,
+		});
+
+		await this.sessionRepository.clearAllSessionByAccountId(account.id);
+
+		this.emailQueue.add({
+			kind: "EmailJob",
+			template: "AccountChangedEmail",
+			props: {
+				newEmail: newEmail,
+			},
+			subject: "Your email address has been changed",
+			to: oldEmail,
+		});
+
+		this.emailQueue.add({
+			kind: "EmailJob",
+			template: "AccountNewEmail",
+			props: {},
+			subject: "New email address added to your account",
+			to: newEmail,
+		});
+	}
+
+	@Catch()
+	async generateEmailChange(newEmail: string) {
+		const config = await this.configRepository.findConfig();
+
+		if (!config.account.emailChangeConfirmationRequired) {
+			throw new ORPCError("FORBIDDEN", {
+				message:
+					"Email change confirmation is disabled. Please use the change email with password flow.",
+			});
+		}
+
+		const session = this.metadata.session();
+
+		const account = await this.accountRepository.findByEmail(session.email);
+
+		if (!account) {
+			throw new ORPCError("NOT_FOUND", {
+				message: "Account not found",
+			});
+		}
+
+		if (account.email === newEmail) {
+			throw new ORPCError("UNPROCESSABLE_CONTENT", {
+				message: "The new email address must be different from the current one",
+			});
+		}
+
+		const newEmailInUse = await this.accountRepository.findByEmail(newEmail);
+
+		if (newEmailInUse) {
+			throw new ORPCError("CONFLICT", {
+				message: "The new email is already in use by another account",
+			});
+		}
+
+		const alreadyHasChangeActive =
+			await this.accountConfirmationsRepository.findByAccountAndType(
+				account.id,
+				"EMAIL_CHANGE",
+			);
+
+		if (alreadyHasChangeActive) {
+			throw new ORPCError("CONFLICT", {
+				message:
+					"An email change is already active for this account. Please check your email or wait until it expires.",
+			});
+		}
+
+		const { expiresAt, token, tokenHash } =
+			await this.accountConfirmationsService.generateTokenAndHash(24 * 60);
+
+		await this.accountConfirmationsRepository.create(account.id, {
+			channel: "LINK",
+			expiresAt,
+			tokenHash: tokenHash,
+			value: newEmail,
+			type: "EMAIL_CHANGE",
+		});
+
+		this.emailQueue.add({
+			kind: "EmailJob",
+			template: "AccountConfirmationNewEmail",
+			props: {
+				link: this.emailLinks.links.accountEmailChangePreview(token),
+			},
+			subject: "Confirm your new email address",
+			to: account.email,
+		});
+	}
+
+	@Catch()
+	async previewEmailChange(token: string) {
+		const session = this.metadata.session();
+
+		const account = await this.accountRepository.findByEmail(session.email);
+
+		if (!account) {
+			throw new ORPCError("NOT_FOUND", {
+				message: "Account not found",
+			});
+		}
+
+		const confirmation =
+			await this.accountConfirmationsService.isValidByAccountAndType({
+				accountId: account.id,
+				rawToken: token,
+				type: "EMAIL_CHANGE",
+			});
+
+		if (!confirmation) {
+			throw new ORPCError("NOT_FOUND", {
+				message: "Email change confirmation not found, or expired",
+			});
+		}
+
+		if (!confirmation.value) {
+			throw new ORPCError("UNPROCESSABLE_CONTENT", {
+				message: "No new email associated with this confirmation",
+			});
+		}
+
+		return {
+			newEmail: confirmation.value,
+			expiresAt: confirmation.expires_at,
+		};
+	}
+
+	@Catch()
+	async confirmEmailChange(rawToken: string) {
+		const session = this.metadata.session();
+
+		const account = await this.accountRepository.findByEmail(session.email);
+
+		if (!account) {
+			throw new ORPCError("NOT_FOUND", {
+				message: "Account not found",
+			});
+		}
+
+		const confirmation =
+			await this.accountConfirmationsRepository.findByAccountAndType(
+				account.id,
+				"EMAIL_CHANGE",
+			);
+
+		if (!confirmation) {
+			throw new ORPCError("NOT_FOUND", {
+				message: "Email change confirmation not found, or expired",
+			});
+		}
+
+		if (!confirmation.value) {
+			throw new ORPCError("UNPROCESSABLE_CONTENT", {
+				message: "No new email associated with this confirmation",
+			});
+		}
+
+		await this.accountConfirmationsService.verifyConfirmation(
+			confirmation,
+			rawToken,
+		);
+
+		const newEmail = confirmation.value;
+		const oldEmail = account.email;
+
+		const emailInUse = await this.accountRepository.findByEmail(newEmail);
+
+		if (emailInUse) {
+			throw new ORPCError("CONFLICT", {
+				message: "The new email is already in use by another account",
+			});
+		}
+
+		const characters =
+			await this.playersRepository.allCharactersWithOnlineStatus(account.id);
+
+		const anyCharacterOnline = characters.some((char) => char.online);
+
+		if (anyCharacterOnline) {
+			throw new ORPCError("FORBIDDEN", {
+				message:
+					"Cannot change email while one or more characters are online. Please log out all characters and try again.",
+			});
+		}
+
+		await this.accountRepository.updateEmail(account.id, newEmail);
+
+		await this.auditRepository.createAudit("CHANGED_EMAIL_WITH_CONFIRMATION", {
+			details: `Email changed from ${oldEmail} to ${newEmail} using confirmation link`,
+			success: true,
+		});
+
+		await this.sessionRepository.clearAllSessionByAccountId(account.id);
+		await this.accountRepository.resetConfirmEmail(newEmail);
+
+		const { expiresAt, token, tokenHash } =
+			await this.accountConfirmationsService.generateTokenAndHash(24 * 60);
+
+		await this.accountConfirmationsRepository.create(account.id, {
+			channel: "CODE",
+			expiresAt,
+			tokenHash: tokenHash,
+			type: "EMAIL_VERIFICATION",
+		});
+
+		this.emailQueue.add({
+			kind: "EmailJob",
+			template: "AccountConfirmationEmail",
+			props: {
+				token: token,
+			},
+			subject: "Confirm your email address",
+			to: newEmail,
+		});
+
+		this.emailQueue.add({
+			kind: "EmailJob",
+			template: "AccountChangedEmail",
+			props: {
+				newEmail: newEmail,
+			},
+			subject: "Your email address has been changed",
+			to: oldEmail,
+		});
+
+		this.emailQueue.add({
+			kind: "EmailJob",
+			template: "AccountNewEmail",
+			props: {},
+			subject: "New email address added to your account",
+			to: newEmail,
+		});
+
+		return {
+			newEmail: newEmail,
 		};
 	}
 }
