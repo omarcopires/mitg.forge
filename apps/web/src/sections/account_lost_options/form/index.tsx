@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useParams } from "@tanstack/react-router";
+import { useNavigate, useParams } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -31,6 +31,7 @@ export const AccountLostOptionsForm = () => {
 		from: "/_not_auth/account/lost/$email",
 	});
 	const { config } = useConfig();
+	const navigate = useNavigate();
 	const mailerEnabled = config.mailer.enabled;
 	const form = useForm<FormValues>({
 		resolver: zodResolver(FormSchema),
@@ -41,28 +42,32 @@ export const AccountLostOptionsForm = () => {
 		},
 	});
 
-	const handleSubmit = useCallback((data: FormValues) => {
-		switch (data.method) {
-			case "forgot_password":
-				setDialogResetPasswordOpen(true);
-				break;
-			case "forgot_password_recovery_key":
-				/**
-				 * TODO: Send to a page where the user can input their recovery key to change their password.
-				 */
-				break;
-			case "account_hacked":
-				setDialogResetPasswordOpen(true);
-				break;
-			case "change_email_recovery_key":
-				/**
-				 * TODO: Send to a page where the user can input their recovery key to change their email.
-				 */
-				break;
-			default:
-				toast.error("Invalid option selected.");
-		}
-	}, []);
+	const handleSubmit = useCallback(
+		(data: FormValues) => {
+			switch (data.method) {
+				case "forgot_password":
+					setDialogResetPasswordOpen(true);
+					break;
+				case "forgot_password_recovery_key":
+					navigate({
+						to: "/account/lost/$email/password_reset_rk",
+						params: { email },
+					});
+					break;
+				case "account_hacked":
+					setDialogResetPasswordOpen(true);
+					break;
+				case "change_email_recovery_key":
+					/**
+					 * TODO: Send to a page where the user can input their recovery key to change their email.
+					 */
+					break;
+				default:
+					toast.error("Invalid option selected.");
+			}
+		},
+		[navigate, email],
+	);
 
 	return (
 		<>

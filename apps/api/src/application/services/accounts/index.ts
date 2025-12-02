@@ -7,7 +7,6 @@ import type {
 	EmailLinks,
 	HasherCrypto,
 	PlayerNameDetection,
-	RecoveryKey,
 } from "@/domain/modules";
 import type {
 	AccountConfirmationsRepository,
@@ -28,6 +27,7 @@ import { type Gender, getPlayerGenderId } from "@/shared/utils/player/gender";
 import { getSampleName } from "@/shared/utils/player/sample";
 import type { AccountConfirmationsService } from "../accountConfirmations";
 import type { AuditService } from "../audit";
+import type { RecoveryKeyService } from "../recoveryKey";
 
 @injectable()
 export class AccountsService {
@@ -38,13 +38,14 @@ export class AccountsService {
 		private readonly sessionRepository: SessionRepository,
 		@inject(TOKENS.HasherCrypto)
 		private readonly hasherCrypto: HasherCrypto,
+		@inject(TOKENS.RecoveryKeyService)
+		private readonly recoveryKeyService: RecoveryKeyService,
 		@inject(TOKENS.ExecutionContext)
 		private readonly executionContext: ExecutionContext,
 		@inject(TOKENS.PlayersRepository)
 		private readonly playersRepository: PlayersRepository,
 		@inject(TOKENS.AccountRegistrationRepository)
 		private readonly accountRegistrationRepository: AccountRegistrationRepository,
-		@inject(TOKENS.RecoveryKey) private readonly recoveryKey: RecoveryKey,
 		@inject(TOKENS.EmailQueue) private readonly emailQueue: EmailQueue,
 		@inject(TOKENS.DetectionChanges)
 		private readonly detection: DetectionChanges,
@@ -126,6 +127,7 @@ export class AccountsService {
 
 		this.auditService.createAudit("CREATED_ACCOUNT", {
 			details: `Account created for email: ${data.email}`,
+			accountId: newAccount.id,
 		});
 
 		/**
@@ -410,23 +412,20 @@ export class AccountsService {
 		const alreadyHasRegistration =
 			await this.accountRegistrationRepository.findByAccountId(account.id);
 		let recoveryKey: string | null = null;
+		let recoveryKeyHashed: string | null = null;
 
 		if (!alreadyHasRegistration) {
-			recoveryKey = this.recoveryKey.generate();
+			const { hashedRecoveryKey, rawRecoveryKey } =
+				this.recoveryKeyService.generate();
 
-			const alreadyExists =
-				await this.accountRegistrationRepository.findByRecoveryKey(recoveryKey);
-
-			if (alreadyExists) {
-				// Extremely unlikely, but just in case, we generate a new one.
-				recoveryKey = this.recoveryKey.generate();
-			}
+			recoveryKey = rawRecoveryKey;
+			recoveryKeyHashed = hashedRecoveryKey;
 
 			this.emailQueue.add({
 				kind: "EmailJob",
 				to: account.email,
 				props: {
-					code: recoveryKey,
+					code: rawRecoveryKey,
 					user: account.name ?? "User",
 				},
 				subject: "Your Account Recovery Key",
@@ -466,7 +465,7 @@ export class AccountsService {
 				postal: input.postal,
 				state: input.state,
 				additional: input.additional,
-				...(recoveryKey ? { recoveryKey: recoveryKey } : {}),
+				...(recoveryKeyHashed ? { recoveryKey: recoveryKeyHashed } : {}),
 			});
 
 		return {

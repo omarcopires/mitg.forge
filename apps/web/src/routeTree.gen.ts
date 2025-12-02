@@ -59,6 +59,8 @@ const AuthAccountEmailChangeIndexLazyRouteImport = createFileRoute(
 )()
 const Not_authAccountLostTokenPassword_resetIndexLazyRouteImport =
   createFileRoute('/_not_auth/account/lost/$token/password_reset/')()
+const Not_authAccountLostEmailPassword_reset_rkIndexLazyRouteImport =
+  createFileRoute('/_not_auth/account/lost/$email/password_reset_rk/')()
 const AuthAccountEmailChangeTokenPreviewIndexLazyRouteImport = createFileRoute(
   '/_auth/account/email/change/$token/preview/',
 )()
@@ -238,6 +240,16 @@ const Not_authAccountLostTokenPassword_resetIndexLazyRoute =
       './routes/_not_auth/account/lost/$token/password_reset/index.lazy'
     ).then((d) => d.Route),
   )
+const Not_authAccountLostEmailPassword_reset_rkIndexLazyRoute =
+  Not_authAccountLostEmailPassword_reset_rkIndexLazyRouteImport.update({
+    id: '/password_reset_rk/',
+    path: '/password_reset_rk/',
+    getParentRoute: () => Not_authAccountLostEmailRouteRoute,
+  } as any).lazy(() =>
+    import(
+      './routes/_not_auth/account/lost/$email/password_reset_rk/index.lazy'
+    ).then((d) => d.Route),
+  )
 const AuthAccountPlayerNameUndeleteIndexRoute =
   AuthAccountPlayerNameUndeleteIndexRouteImport.update({
     id: '/account/player/$name/undelete/',
@@ -302,6 +314,7 @@ export interface FileRoutesByFullPath {
   '/account/player/$name/delete': typeof AuthAccountPlayerNameDeleteIndexRoute
   '/account/player/$name/edit': typeof AuthAccountPlayerNameEditIndexRoute
   '/account/player/$name/undelete': typeof AuthAccountPlayerNameUndeleteIndexRoute
+  '/account/lost/$email/password_reset_rk': typeof Not_authAccountLostEmailPassword_reset_rkIndexLazyRoute
   '/account/lost/$token/password_reset': typeof Not_authAccountLostTokenPassword_resetIndexLazyRoute
   '/account/email/change/$token/preview': typeof AuthAccountEmailChangeTokenPreviewIndexLazyRoute
 }
@@ -327,6 +340,7 @@ export interface FileRoutesByTo {
   '/account/player/$name/delete': typeof AuthAccountPlayerNameDeleteIndexRoute
   '/account/player/$name/edit': typeof AuthAccountPlayerNameEditIndexRoute
   '/account/player/$name/undelete': typeof AuthAccountPlayerNameUndeleteIndexRoute
+  '/account/lost/$email/password_reset_rk': typeof Not_authAccountLostEmailPassword_reset_rkIndexLazyRoute
   '/account/lost/$token/password_reset': typeof Not_authAccountLostTokenPassword_resetIndexLazyRoute
   '/account/email/change/$token/preview': typeof AuthAccountEmailChangeTokenPreviewIndexLazyRoute
 }
@@ -357,6 +371,7 @@ export interface FileRoutesById {
   '/_auth/account/player/$name/delete/': typeof AuthAccountPlayerNameDeleteIndexRoute
   '/_auth/account/player/$name/edit/': typeof AuthAccountPlayerNameEditIndexRoute
   '/_auth/account/player/$name/undelete/': typeof AuthAccountPlayerNameUndeleteIndexRoute
+  '/_not_auth/account/lost/$email/password_reset_rk/': typeof Not_authAccountLostEmailPassword_reset_rkIndexLazyRoute
   '/_not_auth/account/lost/$token/password_reset/': typeof Not_authAccountLostTokenPassword_resetIndexLazyRoute
   '/_auth/account/email/change/$token/preview/': typeof AuthAccountEmailChangeTokenPreviewIndexLazyRoute
 }
@@ -385,6 +400,7 @@ export interface FileRouteTypes {
     | '/account/player/$name/delete'
     | '/account/player/$name/edit'
     | '/account/player/$name/undelete'
+    | '/account/lost/$email/password_reset_rk'
     | '/account/lost/$token/password_reset'
     | '/account/email/change/$token/preview'
   fileRoutesByTo: FileRoutesByTo
@@ -410,6 +426,7 @@ export interface FileRouteTypes {
     | '/account/player/$name/delete'
     | '/account/player/$name/edit'
     | '/account/player/$name/undelete'
+    | '/account/lost/$email/password_reset_rk'
     | '/account/lost/$token/password_reset'
     | '/account/email/change/$token/preview'
   id:
@@ -439,6 +456,7 @@ export interface FileRouteTypes {
     | '/_auth/account/player/$name/delete/'
     | '/_auth/account/player/$name/edit/'
     | '/_auth/account/player/$name/undelete/'
+    | '/_not_auth/account/lost/$email/password_reset_rk/'
     | '/_not_auth/account/lost/$token/password_reset/'
     | '/_auth/account/email/change/$token/preview/'
   fileRoutesById: FileRoutesById
@@ -612,6 +630,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Not_authAccountLostTokenPassword_resetIndexLazyRouteImport
       parentRoute: typeof Not_authAccountLostTokenRouteRoute
     }
+    '/_not_auth/account/lost/$email/password_reset_rk/': {
+      id: '/_not_auth/account/lost/$email/password_reset_rk/'
+      path: '/password_reset_rk'
+      fullPath: '/account/lost/$email/password_reset_rk'
+      preLoaderRoute: typeof Not_authAccountLostEmailPassword_reset_rkIndexLazyRouteImport
+      parentRoute: typeof Not_authAccountLostEmailRouteRoute
+    }
     '/_auth/account/player/$name/undelete/': {
       id: '/_auth/account/player/$name/undelete/'
       path: '/account/player/$name/undelete'
@@ -712,12 +737,15 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 
 interface Not_authAccountLostEmailRouteRouteChildren {
   Not_authAccountLostEmailIndexLazyRoute: typeof Not_authAccountLostEmailIndexLazyRoute
+  Not_authAccountLostEmailPassword_reset_rkIndexLazyRoute: typeof Not_authAccountLostEmailPassword_reset_rkIndexLazyRoute
 }
 
 const Not_authAccountLostEmailRouteRouteChildren: Not_authAccountLostEmailRouteRouteChildren =
   {
     Not_authAccountLostEmailIndexLazyRoute:
       Not_authAccountLostEmailIndexLazyRoute,
+    Not_authAccountLostEmailPassword_reset_rkIndexLazyRoute:
+      Not_authAccountLostEmailPassword_reset_rkIndexLazyRoute,
   }
 
 const Not_authAccountLostEmailRouteRouteWithChildren =

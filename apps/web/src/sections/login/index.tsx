@@ -144,7 +144,7 @@ export const LoginSection = () => {
 											}}
 										/>
 									</div>
-									<div className="flex flex-row-reverse gap-1 self-end md:flex-col md:self-start">
+									<div className="flex flex-row-reverse flex-wrap gap-1 self-end md:flex-col md:self-start">
 										<ButtonImage type="submit" variant="info">
 											Login
 										</ButtonImage>

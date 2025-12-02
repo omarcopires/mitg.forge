@@ -30,12 +30,16 @@ export class UseCasesFactory {
 		const resetPasswordWithToken = this.di.resolve(
 			TOKENS.LostAccountResetPasswordWithTokenUseCase,
 		);
+		const resetPasswordWithRecoveryKey = this.di.resolve(
+			TOKENS.LostAccountResetPasswordWithRecoveryKeyUseCase,
+		);
 
 		return {
 			findByEmailOrCharacterName,
 			generatePasswordReset,
 			validateConfirmationToken,
 			resetPasswordWithToken,
+			resetPasswordWithRecoveryKey,
 		} as const;
 	}
 

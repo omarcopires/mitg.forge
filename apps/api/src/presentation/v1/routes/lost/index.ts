@@ -1,6 +1,7 @@
 import { base } from "@/infra/rpc/base";
 import { findByEmailOrCharacterNameRoute } from "./findByEmail";
 import { generatePasswordResetRoute } from "./generatePasswordReset";
+import { resetPasswordWithRecoveryKeyRoute } from "./resetPasswordWithRecoveryKey";
 import { resetPasswordWithTokenRoute } from "./resetPasswordWithToken";
 import { validConfirmationTokenRoute } from "./validConfirmationToken";
 
@@ -11,5 +12,6 @@ export const lostAccountRouter = base
 		findByEmail: findByEmailOrCharacterNameRoute,
 		generatePasswordReset: generatePasswordResetRoute,
 		resetPasswordWithToken: resetPasswordWithTokenRoute,
+		resetPasswordWithRecoveryKey: resetPasswordWithRecoveryKeyRoute,
 		validConfirmationToken: validConfirmationTokenRoute,
 	});

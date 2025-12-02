@@ -8,6 +8,16 @@ import type { PaginationInput } from "@/shared/utils/paginate";
 export class AccountRepository {
 	constructor(@inject(TOKENS.Prisma) private readonly prisma: Prisma) {}
 
+	async findAccountByRecoveryKey(recoveryKey: string) {
+		return this.prisma.accounts.findFirst({
+			where: {
+				registrations: {
+					recoveryKey: recoveryKey,
+				},
+			},
+		});
+	}
+
 	updateEmail(accountId: number, email: string) {
 		return this.prisma.accounts.update({
 			where: {

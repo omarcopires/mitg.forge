@@ -6,6 +6,7 @@ import type {
 	ConfigService,
 	LostAccountService,
 	PlayersService,
+	RecoveryKeyService,
 	SessionService,
 	TibiaClientService,
 	WorldsService,
@@ -37,6 +38,7 @@ import type {
 	ConfigUpdateUseCase,
 	LostAccountFindByEmailOrCharacterNameUseCase,
 	LostAccountGeneratePasswordResetUseCase,
+	LostAccountResetPasswordWithRecoveryKeyUseCase,
 	LostAccountResetPasswordWithTokenUseCase,
 	LostAccountVerifyConfirmationTokenUseCase,
 	SessionAuthenticatedUseCase,
@@ -151,6 +153,7 @@ export const TOKENS = {
 	AuditService: token<AuditService>("AuditService"),
 	ConfigService: token<ConfigService>("ConfigService"),
 	LostAccountService: token<LostAccountService>("LostAccountService"),
+	RecoveryKeyService: token<RecoveryKeyService>("RecoveryKeyService"),
 
 	// UseCases
 	AccountLoginUseCase: token<AccountLoginUseCase>("LoginUseCase"),
@@ -230,6 +233,10 @@ export const TOKENS = {
 	LostAccountResetPasswordWithTokenUseCase:
 		token<LostAccountResetPasswordWithTokenUseCase>(
 			"LostAccountResetPasswordWithTokenUseCase",
+		),
+	LostAccountResetPasswordWithRecoveryKeyUseCase:
+		token<LostAccountResetPasswordWithRecoveryKeyUseCase>(
+			"LostAccountResetPasswordWithRecoveryKeyUseCase",
 		),
 
 	WorldsListUseCase: token<WorldsListUseCase>("WorldsListUseCase"),

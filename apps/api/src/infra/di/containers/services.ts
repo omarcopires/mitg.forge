@@ -6,6 +6,7 @@ import {
 	ConfigService,
 	LostAccountService,
 	PlayersService,
+	RecoveryKeyService,
 	SessionService,
 	TibiaClientService,
 	WorldsService,
@@ -31,6 +32,11 @@ export function registerServices() {
 	container.register(
 		TOKENS.SessionService,
 		{ useClass: SessionService },
+		{ lifecycle: Lifecycle.ResolutionScoped },
+	);
+	container.register(
+		TOKENS.RecoveryKeyService,
+		{ useClass: RecoveryKeyService },
 		{ lifecycle: Lifecycle.ResolutionScoped },
 	);
 	container.register(

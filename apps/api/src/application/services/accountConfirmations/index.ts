@@ -79,12 +79,9 @@ export class AccountConfirmationsService {
 		const rawToken = token;
 		const hashToken = confirmation.token;
 
-		const hashedRawToken = this.tokenHasher.verifyAndReturnHash(
-			rawToken,
-			hashToken,
-		);
+		const isValid = this.tokenHasher.verify(rawToken, hashToken);
 
-		if (!hashedRawToken) {
+		if (!isValid) {
 			throw new ORPCError("UNAUTHORIZED", {
 				message: "Invalid confirmation token",
 			});
@@ -130,6 +127,7 @@ export class AccountConfirmationsService {
 			});
 		}
 
+		const hashedRawToken = this.tokenHasher.hash(rawToken);
 		if (confirmation.token !== hashedRawToken) {
 			await this.accountConfirmationsRepository.update(confirmation.id, {
 				attempts: actualAttempts,

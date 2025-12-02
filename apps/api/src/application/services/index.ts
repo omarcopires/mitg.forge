@@ -4,6 +4,7 @@ export * from "./audit";
 export * from "./config";
 export * from "./lostAccount";
 export * from "./players";
+export * from "./recoveryKey";
 export * from "./session";
 export * from "./tibiaclient";
 export * from "./worlds";

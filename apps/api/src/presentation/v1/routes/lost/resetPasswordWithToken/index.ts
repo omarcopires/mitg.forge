@@ -4,7 +4,7 @@ import { isNotAuthenticatedProcedure } from "@/presentation/procedures/isNotAuth
 export const resetPasswordWithTokenRoute = isNotAuthenticatedProcedure
 	.route({
 		method: "POST",
-		path: "/account/password/token/{token}/reset",
+		path: "/account/password/token/reset",
 		successStatus: 204,
 		summary: "Reset Password With Token",
 		description:

@@ -4,6 +4,7 @@ import { Catch } from "@/application/decorators/Catch";
 import type { EmailLinks, HasherCrypto } from "@/domain/modules";
 import type {
 	AccountConfirmationsRepository,
+	AccountRegistrationRepository,
 	AccountRepository,
 	SessionRepository,
 } from "@/domain/repositories";
@@ -11,6 +12,7 @@ import { TOKENS } from "@/infra/di/tokens";
 import type { EmailQueue } from "@/jobs/queue";
 import type { AccountConfirmationsService } from "../accountConfirmations";
 import type { AuditService } from "../audit";
+import type { RecoveryKeyService } from "../recoveryKey";
 
 @injectable()
 export class LostAccountService {
@@ -28,6 +30,10 @@ export class LostAccountService {
 		private readonly auditService: AuditService,
 		@inject(TOKENS.SessionRepository)
 		private readonly sessionRepository: SessionRepository,
+		@inject(TOKENS.AccountRegistrationRepository)
+		private readonly accountRegistrationRepository: AccountRegistrationRepository,
+		@inject(TOKENS.RecoveryKeyService)
+		private readonly recoveryKeyService: RecoveryKeyService,
 	) {}
 
 	private async accountExists(emailOrCharacterName: string) {
@@ -147,6 +153,67 @@ export class LostAccountService {
 			template: "AccountPasswordChanged",
 			props: {},
 			subject: "Your password has been changed",
+			to: account.email,
+		});
+	}
+
+	@Catch()
+	async changePasswordWithRecoveryKey({
+		email,
+		newPassword,
+		recoveryKey,
+	}: {
+		email: string;
+		recoveryKey: string;
+		newPassword: string;
+	}) {
+		const errorMessage = "Invalid recovery data";
+
+		const account = await this.accountRepository.findByEmail(email);
+
+		if (!account) {
+			throw new ORPCError("UNAUTHORIZED", {
+				message: errorMessage,
+			});
+		}
+
+		const registration =
+			await this.accountRegistrationRepository.findByAccountId(account.id);
+
+		if (!registration || !registration.recoveryKey) {
+			throw new ORPCError("UNAUTHORIZED", {
+				message: errorMessage,
+			});
+		}
+
+		const isValid = await this.recoveryKeyService.isValid(
+			recoveryKey,
+			registration.recoveryKey,
+		);
+
+		if (!isValid) {
+			throw new ORPCError("UNAUTHORIZED", {
+				message: errorMessage,
+			});
+		}
+
+		const newHashedPassword = this.hasherCrypto.hash(newPassword);
+
+		await this.accountRepository.updatePassword(account.id, newHashedPassword);
+
+		await this.sessionRepository.clearAllSessionByAccountId(account.id);
+
+		await this.auditService.createAudit("CHANGED_PASSWORD_WITH_RECOVERY_KEY", {
+			details: "Password changed using recovery key for account",
+			success: true,
+			accountId: account.id,
+		});
+
+		this.emailQueue.add({
+			kind: "EmailJob",
+			template: "AccountPasswordChanged",
+			props: {},
+			subject: "Your password has been changed using recovery key",
 			to: account.email,
 		});
 	}

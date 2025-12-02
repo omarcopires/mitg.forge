@@ -26,6 +26,7 @@ const AUTHENTICATION_CONFIG_SCHEMA = z.object({
 		.string()
 		.transform((val) => val.split(",").map((item) => item.trim())),
 	JWT_SECRET: z.string(),
+	HASHER_SECRET: z.string(),
 });
 
 const REDIS_CONFIG_SCHEMA = z.object({

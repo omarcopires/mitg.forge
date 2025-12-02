@@ -1,22 +1,24 @@
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { injectable } from "tsyringe";
 import { env } from "@/infra/env";
 
 @injectable()
 export class TokenHasher {
-	private readonly secret = env.JWT_SECRET;
+	private readonly secret = env.HASHER_SECRET;
 
 	hash(token: string): string {
 		return createHmac("sha256", this.secret).update(token).digest("hex");
 	}
 
-	verifyAndReturnHash(token: string, hash: string): string | null {
+	verify(token: string, hash: string): boolean {
 		const computed = this.hash(token);
 
-		if (computed !== hash) {
-			return null;
-		}
+		const a = Buffer.from(computed, "hex");
+		const b = Buffer.from(hash, "hex");
 
-		return computed;
+		if (a.length !== b.length) return false;
+
+		// Use timingSafeEqual to prevent timing attacks
+		return timingSafeEqual(a, b);
 	}
 }
